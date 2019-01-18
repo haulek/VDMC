@@ -1,0 +1,20 @@
+#C++ = mpicxx
+#CFLAGS = -Ofast -fPIC -fno-strict-aliasing -fno-common -dynamic -arch x86_64 -arch x86_64
+#LIBS = -L/usr/local/lib -lgsl -lgslcblas -framework Accelerate 
+#PYLIBS = -L/Applications/Canopy.app/appdata/canopy-1.6.2.3262.macosx-x86_64/Canopy.app/Contents/lib/python2.7/config -lpython2.7 -ldl -framework CoreFoundation
+#PYBIND = -I . -I/System/Library/Frameworks/Python.framework/Versions/2.7/Extras/lib/python/scipy/weave/blitz # -I/usr/lib/python2.7/site-packages/weave/blitz -I$(HOME)/bin/include 
+#PYTHON = -I/Applications/Canopy.app/appdata/canopy-1.6.2.3262.macosx-x86_64/Canopy.app/Contents/include/python2.7
+
+C++ = mpicxx
+CFLAGS = -Ofast -fPIC 
+LIBS = -L/usr/local/lib -L/usr/lib64/ -lgslcblas -lgsl
+PYLIBS = 
+PYBIND = -I . -I/usr/lib/python2.7/site-packages/weave/blitz -I/usr/include -I/usr/include/python2.7 
+PYTHON = 
+
+tpvert.so : tpvert.cc util.h interpolate.h analytic.h slinalg.h ypy.h
+	$(C++) $(CFLAGS) -shared -std=c++11 $(PYBIND) $(PYTHON) tpvert.cc -o $@ $(LIBS) $(PYLIBS)
+
+clean : 
+	rm -f tpvert.so 
+	rm -rf tpvert.so.dSYM

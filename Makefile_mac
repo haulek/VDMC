@@ -1,0 +1,16 @@
+C++ = mpicxx
+CFLAGS = -Ofast -fPIC -fno-strict-aliasing -fno-common -dynamic -arch x86_64 -arch x86_64
+#CFLAGS = -m32 -g -fno-inline -fno-omit-frame-pointer -fPIC -dynamic #-arch x86_64
+#CFLAGS = -g -fPIC -fno-strict-aliasing -fno-common -dynamic -arch x86_64 -DBZ_DEBUG
+LIBS = -L/usr/local/lib -lgsl -lgslcblas -framework Accelerate #-L$(HOME)/bin/lib -lblitz
+PYLIBS = -L/Applications/Canopy.app/appdata/canopy-1.6.2.3262.macosx-x86_64/Canopy.app/Contents/lib/python2.7/config -lpython2.7 -ldl -framework CoreFoundation
+PYBIND = -I . -I/System/Library/Frameworks/Python.framework/Versions/2.7/Extras/lib/python/scipy/weave/blitz # -I/usr/lib/python2.7/site-packages/weave/blitz -I$(HOME)/bin/include 
+PYTHON = -I/Applications/Canopy.app/appdata/canopy-1.6.2.3262.macosx-x86_64/Canopy.app/Contents/include/python2.7
+
+
+samplewj.so : samplewj.cc samplebj.h util.h random.h analytic.h interpolate.h legendre.h pystreambuf.h sample0.h tanmesh.h timer.h unique.h mmpi.h
+	$(C++) $(CFLAGS) -shared -std=c++11 $(PYBIND) $(PYTHON) samplewj.cc -o samplewj.so $(PYLIBS) $(LIBS)
+
+clean :
+	rm -f samplewj.so
+	rm -rf samplewj.so.dSYM

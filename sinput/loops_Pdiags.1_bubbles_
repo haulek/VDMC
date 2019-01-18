@@ -1,0 +1,7 @@
+# ind N_loops [vertex|type|index]
+0 (1, 0) ; (0,)
+0 2 [[0, 1], [0, 1]]  # loop vertex
+0 2 [[2, 1], [1, 1]]  # loop type
+0 2 [[0, 1], [0, 1]]  # loop index
+0 2 [] # vertex type
+0 2 2  # diagram sign

@@ -1,0 +1,12 @@
+C++ = /opt/ompi/gnu/bin/mpicxx  #mpicxx
+CFLAGS = -Ofast -fPIC
+LIBS = -L/usr/local/lib -L/usr/lib64/ -lgslcblas -lgsl -lblas -llapack
+
+PYBIND = -I. -I/usr/include/python2.7 -I/usr/include -I/usr/lib/python2.7/site-packages/weave/blitz -I/usr/lib64/python2.7/site-packages/scipy/weave/blitz
+
+samplewj.so : samplewj.cc samplebj.h util.h random.h analytic.h interpolate.h legendre.h pystreambuf.h sample0.h tanmesh.h timer.h unique.h mmpi.h baymkadanoff.h ypy.h
+	$(C++) $(CFLAGS) -shared -std=c++11 $(PYBIND) samplewj.cc -o samplewj.so $(LIBS)
+
+clean :
+	rm -f samplewj.so
+	rm -rf samplewj.so.dSYM
