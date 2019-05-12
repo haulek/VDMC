@@ -1,4 +1,4 @@
-// @Copyright 2018 Kristjan Haule and Kun Chen    
+// @Copyright 2018 Kristjan Haule
 #include <cstdint>
 #include <ostream>
 #include <deque>
@@ -7,8 +7,13 @@
 #include <pybind11/numpy.h>
 #include <pybind11/stl.h>
 
+
 #include "pystreambuf.h"
 #include "samplebj.h"
+
+#include "combined_wBK.h"
+#include "density.h"
+
 #include "analytic.h"
 #include "interpolate.h"
 #include "baymkadanoff.h"
@@ -439,7 +444,7 @@ py::tuple sample_static_fast_VHFD(std::ostream& log, double lmbda, const std::ve
 
 py::tuple sample_static_fast_HFC(std::ostream& log, double lmbda, const std::vector<double>& lmbda_spct, const params& p, py::array_t<double>& kx, py::array_t<double>& epsx, 
 				 py::array_t<int>& diagsG, 
-				 const std::vector<std::vector<int> >& diagSign,
+				 const TdiagSign& diagSign,
 				 const std::vector<std::vector<std::vector<int> > >& Loop_index, const std::vector<std::vector<std::vector<int> > >& Loop_type,
 				 py::array_t<int>& Vtype, py::array_t<int>& indx, my_mpi& mpi)
 {
@@ -449,13 +454,14 @@ py::tuple sample_static_fast_HFC(std::ostream& log, double lmbda, const std::vec
   py::buffer_info info_N = _Pbin_.request();
   bl::Array<double,2> Pbin((double*)info_N.ptr, bl::shape(info_N.shape[0],info_N.shape[1]), bl::neverDeleteData);
   Gk_HF Gk(p.beta, p.kF, cd.kx, cd.epsx);   // Hartree-Fock non-interacting green's function
+  bl::Array<double,2> Pbin2(1,1);// Not needed for now
   
   py::array_t<double> _C_Pln_( {p.Nlt+1,p.Nlq+1} );
   py::buffer_info info_P = _C_Pln_.request();
   bl::Array<double,2> C_Pln((double*)info_P.ptr, bl::shape(info_P.shape[0],info_P.shape[1]), bl::neverDeleteData);
   StandardData BKdata(C_Pln);
 
-  sample_static_fastC_combined(BKdata, Pbin, log, lmbda, lmbda_spct, Gk, p, cd.diagsG, diagSign, Loop_index, Loop_type, cd.Vtype, mpi);
+  sample_static_fastC_combined(BKdata, Pbin, Pbin2, log, lmbda, lmbda_spct, Gk, p, cd.diagsG, diagSign, Loop_index, Loop_type, cd.Vtype, mpi);
 
   if (mpi.rank==mpi.master) 
     return py::make_tuple(_C_Pln_, _Pbin_);
@@ -467,7 +473,7 @@ py::tuple sample_static_fast_HFC(std::ostream& log, double lmbda, const std::vec
 
 py::tuple sample_static_fast_VHFC(std::ostream& log, double lmbda, const std::vector<double>& lmbda_spct, const params& p, py::array_t<double>& kx, py::array_t<double>& epsx, 
 				  py::array_t<int>& diagsG,
-				  const std::vector<std::vector<int> >& diagSign,
+				  const TdiagSign& diagSign,
 				  const std::vector<std::vector<std::vector<int> > >& Loop_index, const std::vector<std::vector<std::vector<int> > >& Loop_type,
 				  py::array_t<int>& Vtype, py::array_t<int>& indx, py::array_t<double>& _kxb_, my_mpi& mpi)
 {
@@ -477,7 +483,8 @@ py::tuple sample_static_fast_VHFC(std::ostream& log, double lmbda, const std::ve
   py::buffer_info info_N = _Pbin_.request();
   bl::Array<double,2> Pbin((double*)info_N.ptr, bl::shape(info_N.shape[0],info_N.shape[1]), bl::neverDeleteData);
   Gk_HF Gk(p.beta, p.kF, cd.kx, cd.epsx);   // Hartree-Fock non-interacting green's function
-  
+  bl::Array<double,2> Pbin2(1,1); // Not needed for now
+    
   py::buffer_info info_kxb = _kxb_.request();
   bl::Array<double,1> kxb((double*)info_kxb.ptr, info_kxb.shape[0], bl::neverDeleteData);
   py::array_t<double> _C_Pln_( {p.Nthbin,kxb.extent(0)-1,p.Nlt+1,p.Nlq+1} );
@@ -486,7 +493,7 @@ py::tuple sample_static_fast_VHFC(std::ostream& log, double lmbda, const std::ve
   
   BaymKadanoffData BKdata(C_Pln, kxb);
 
-  sample_static_fastC_combined(BKdata, Pbin, log, lmbda, lmbda_spct, Gk, p, cd.diagsG, diagSign, Loop_index, Loop_type, cd.Vtype, mpi);
+  sample_static_fastC_combined(BKdata, Pbin, Pbin2, log, lmbda, lmbda_spct, Gk, p, cd.diagsG, diagSign, Loop_index, Loop_type, cd.Vtype, mpi);
   
   if (mpi.rank==mpi.master) 
     return py::make_tuple(_C_Pln_, _Pbin_);
@@ -500,7 +507,7 @@ py::tuple sample_static_fast_VHFC(std::ostream& log, double lmbda, const std::ve
 py::tuple sample_static_Discrete_HFC(std::ostream& log, py::array_t<double>& qx,
 				     double lmbda, const std::vector<double>& lmbda_spct, const params& p, py::array_t<double>& kx, py::array_t<double>& epsx, 
 				     py::array_t<int>& diagsG, 
-				     const std::vector<std::vector<int> >& diagSign,
+				     const TdiagSign& diagSign,
 				     const std::vector<std::vector<std::vector<int> > >& Loop_index, const std::vector<std::vector<std::vector<int> > >& Loop_type,
 				     py::array_t<int>& Vtype, py::array_t<int>& indx, my_mpi& mpi)
 {
@@ -529,7 +536,7 @@ py::tuple sample_static_Discrete_HFC(std::ostream& log, py::array_t<double>& qx,
 py::tuple sample_static_Discrete_VHFC(std::ostream& log, py::array_t<double>& qx,
 				      double lmbda, const std::vector<double>& lmbda_spct, const params& p, py::array_t<double>& kx, py::array_t<double>& epsx, 
 				      py::array_t<int>& diagsG, 
-				      const std::vector<std::vector<int> >& diagSign,
+				      const TdiagSign& diagSign,
 				      const std::vector<std::vector<std::vector<int> > >& Loop_index, const std::vector<std::vector<std::vector<int> > >& Loop_type,
 				      py::array_t<int>& Vtype, py::array_t<int>& indx, py::array_t<double>& _kxb_, my_mpi& mpi)
 {
@@ -556,6 +563,7 @@ py::tuple sample_static_Discrete_VHFC(std::ostream& log, py::array_t<double>& qx
     return py::make_tuple(_C_Pln_, _Pbin_);
   }
 }
+
 
 
 py::tuple sample_static_Q0W0_VHFD(std::ostream& log, double lmbda, const std::vector<double>& lmbda_spct, const params& p, py::array_t<double>& kx, py::array_t<double>& epsx, 
@@ -613,7 +621,7 @@ py::tuple sample_static_Q0W0_HFD(std::ostream& log, double lmbda, const std::vec
 py::tuple sample_Discrete_Q0W0_VHFC(std::ostream& log, double Q_external,
 				    double lmbda, const std::vector<double>& lmbda_spct, const params& p, py::array_t<double>& kx, py::array_t<double>& epsx, 
 				    py::array_t<int>& diagsG, 
-				    const std::vector<std::vector<int> >& diagSign,
+				    const TdiagSign& diagSign,
 				    const std::vector<std::vector<std::vector<int> > >& Loop_index, const std::vector<std::vector<std::vector<int> > >& Loop_type,
 				    py::array_t<int>& Vtype, py::array_t<int>& indx, py::array_t<double>& _kxb_, my_mpi& mpi)
 {
@@ -645,7 +653,7 @@ py::tuple sample_Discrete_Q0W0_VHFC(std::ostream& log, double Q_external,
 py::tuple sample_Discrete_Q0W0_HFC(std::ostream& log, double Q_external,
 				   double lmbda, const std::vector<double>& lmbda_spct, const params& p, py::array_t<double>& kx, py::array_t<double>& epsx, 
 				   py::array_t<int>& diagsG,
-				   const std::vector<std::vector<int> >& diagSign,
+				   const TdiagSign& diagSign,
 				   const std::vector<std::vector<std::vector<int> > >& Loop_index, const std::vector<std::vector<std::vector<int> > >& Loop_type,
 				   py::array_t<int>& Vtype, py::array_t<int>& indx, my_mpi& mpi)
 {
@@ -670,7 +678,7 @@ py::tuple sample_Discrete_Q0W0_HFC(std::ostream& log, double Q_external,
 py::tuple sample_Discrete_Q0W0_VSHFC(std::ostream& log, double Q_external,
 				     double lmbda, const std::vector<double>& lmbda_spct, const params& p, py::array_t<double>& kx, py::array_t<double>& epsx, 
 				     py::array_t<int>& diagsG,
-				     const std::vector<std::vector<int> >& diagSign,
+				     const TdiagSign& diagSign,
 				     const std::vector<std::vector<std::vector<int> > >& Loop_index, const std::vector<std::vector<std::vector<int> > >& Loop_type,
 				     py::array_t<int>& Vtype, py::array_t<int>& indx, py::array_t<double>& _kxb_, my_mpi& mpi)
 {
@@ -701,10 +709,172 @@ py::tuple sample_Discrete_Q0W0_VSHFC(std::ostream& log, double Q_external,
 }
 
 
+py::tuple sample_Q0W0(double Q_external, int BKA, std::ostream& log, double lmbda, const std::vector<double>& lmbda_spct, const params& p, py::array_t<double>& kx, py::array_t<double>& epsx, 
+		      py::array_t<int>& diagsG, 
+		      const TdiagSign& diagSign,
+		      const std::vector<std::vector<std::vector<int> > >& Loop_index, const std::vector<std::vector<std::vector<int> > >& Loop_type,
+		      py::array_t<int>& Vtype, py::array_t<int>& indx, py::array_t<double>& _kxb_, my_mpi& mpi)
+{
+  ConvertDiags_ cd(diagsG,kx,epsx,Vtype,indx);
+  
+  py::array_t<double> _Pbin_( p.Nt );
+  py::buffer_info info_N = _Pbin_.request();
+  bl::Array<double,2> Pbin((double*)info_N.ptr, bl::shape(p.Nt,1), bl::neverDeleteData);
+  
+  Gk_HF Gk(p.beta, p.kF, cd.kx, cd.epsx);   // Hartree-Fock non-interacting green's function
+  
+  py::buffer_info info_kxb = _kxb_.request();
+  bl::Array<double,1> kxb((double*)info_kxb.ptr, info_kxb.shape[0], bl::neverDeleteData);
+  
+  py::array_t<double> _C_Pln_( {1,kxb.extent(0)-1,1,kxb.extent(0)-1,1,1} ); // C_Pln (Nthbin, kxb.extent(0)-1, Nthbin, kxb.extent(0)-1, qx.extent(0), Nlt+1);
+  py::buffer_info iP = _C_Pln_.request();
+  bl::Array<double,6> C_Pln((double*)iP.ptr, bl::shape(iP.shape[0],iP.shape[1],iP.shape[2],iP.shape[3],iP.shape[4],iP.shape[5]), bl::neverDeleteData);
 
+  py::array_t<double> _C_Pln1_( {1,kxb.extent(0)-1,1,1} ); // C_Pln1(Nthbin, kxb.extent(0)-1, qx.extent(0), Nlt+1)
+  py::buffer_info iP1 = _C_Pln1_.request();
+  bl::Array<double,4> C_Pln1((double*)iP1.ptr, bl::shape(iP1.shape[0],iP1.shape[1],iP1.shape[2],iP1.shape[3]), bl::neverDeleteData);
+
+  py::array_t<double> _C_Pln0_( {1,1} ); // C_Pln0(qx.extent(0), Nlt+1)
+  py::buffer_info iP0 = _C_Pln0_.request();
+  bl::Array<double,2> C_Pln0((double*)iP0.ptr, bl::shape(iP0.shape[0],iP0.shape[1]), bl::neverDeleteData);
+  
+  BaymKadanoff_Combined BKdata(C_Pln, C_Pln1, C_Pln0, kxb, cd.Vtype);
+
+  //py::array_t<double> _Pq0_( {qx.size(), 2} );
+  py::array_t<double> _Pq0_( {1, 2} );
+  py::buffer_info info_pq = _Pq0_.request();
+  bl::Array<double,2> Pq0((double*)info_pq.ptr, bl::shape(info_pq.shape[0],info_pq.shape[1]), bl::neverDeleteData);
+  
+  bl::Array<double,1> qx(1); qx(0)=Q_external;
+  sample_combined_wBK(BKdata, Pbin, Pq0, log, qx, lmbda, lmbda_spct, Gk, p, cd.diagsG, diagSign, Loop_index, Loop_type, cd.Vtype, mpi);
+
+  if (mpi.rank==mpi.master) 
+    return py::make_tuple(_C_Pln_, _C_Pln1_, _C_Pln0_, _Pbin_, _Pq0_);
+  else{
+    py::array_t<double> _C_Pln_( {1,1,1,1,1,1} );// fake empty output in order not to copy huge data on all cores.
+    py::array_t<double> _C_Pln1_({1,1,1,1} );
+    py::array_t<double> _C_Pln0_({1,1});
+    return py::make_tuple(_C_Pln_, _C_Pln1_, _C_Pln0_, _Pbin_, _Pq0_);
+  }
+}
+py::tuple sample_combined_discrete(std::ostream& log, py::array_t<double>& qx,
+				   double lmbda, const std::vector<double>& lmbda_spct, const params& p, py::array_t<double>& kx, py::array_t<double>& epsx, 
+				   py::array_t<int>& diagsG, 
+				   const TdiagSign& diagSign,
+				   const std::vector<std::vector<std::vector<int> > >& Loop_index, const std::vector<std::vector<std::vector<int> > >& Loop_type,
+				   py::array_t<int>& Vtype, py::array_t<int>& indx, py::array_t<double>& _kxb_, my_mpi& mpi)
+{
+  ConvertDiags_ cd(diagsG,kx,epsx,Vtype,indx, qx);
+  
+  py::array_t<double> _Pbin_( {p.Nt, cd.qx.extent(0)} );
+  py::buffer_info info_N = _Pbin_.request();
+  bl::Array<double,2> Pbin((double*)info_N.ptr, bl::shape(info_N.shape[0],info_N.shape[1]), bl::neverDeleteData);
+  Gk_HF Gk(p.beta, p.kF, cd.kx, cd.epsx);   // Hartree-Fock non-interacting green's function
+  
+  py::buffer_info info_kxb = _kxb_.request();
+  bl::Array<double,1> kxb((double*)info_kxb.ptr, info_kxb.shape[0], bl::neverDeleteData);
+  
+  py::array_t<double> _C_Pln2_( {p.Nthbin,kxb.extent(0)-1,p.Nthbin,kxb.extent(0)-1,cd.qx.extent(0),p.Nlt+1} ); // C_Pln (Nthbin, kxb.extent(0)-1, Nthbin, kxb.extent(0)-1, qx.extent(0), Nlt+1);
+  py::buffer_info iP = _C_Pln2_.request();
+  bl::Array<double,6> C_Pln2((double*)iP.ptr, bl::shape(iP.shape[0],iP.shape[1],iP.shape[2],iP.shape[3],iP.shape[4],iP.shape[5]), bl::neverDeleteData);
+
+  py::array_t<double> _C_Pln1_( {p.Nthbin,kxb.extent(0)-1,cd.qx.extent(0),p.Nlt+1} ); // C_Pln1(Nthbin, kxb.extent(0)-1, qx.extent(0), Nlt+1)
+  py::buffer_info iP1 = _C_Pln1_.request();
+  bl::Array<double,4> C_Pln1((double*)iP1.ptr, bl::shape(iP1.shape[0],iP1.shape[1],iP1.shape[2],iP1.shape[3]), bl::neverDeleteData);
+
+  py::array_t<double> _C_Pln0_( {cd.qx.extent(0),p.Nlt+1} ); // C_Pln0(qx.extent(0), Nlt+1)
+  py::buffer_info iP0 = _C_Pln0_.request();
+  bl::Array<double,2> C_Pln0((double*)iP0.ptr, bl::shape(iP0.shape[0],iP0.shape[1]), bl::neverDeleteData);
+  
+  BaymKadanoff_Combined BKdata(C_Pln2, C_Pln1, C_Pln0, kxb, cd.Vtype);
+
+  py::array_t<double> _Pq0_( {cd.qx.extent(0), 2} );
+  py::buffer_info info_pq = _Pq0_.request();
+  bl::Array<double,2> Pq0((double*)info_pq.ptr, bl::shape(info_pq.shape[0],info_pq.shape[1]), bl::neverDeleteData);
+  
+  sample_combined_wBK(BKdata, Pbin, Pq0, log, cd.qx, lmbda, lmbda_spct, Gk, p, cd.diagsG, diagSign, Loop_index, Loop_type, cd.Vtype, mpi);
+
+  double sm = sum(C_Pln1);
+  log << "Here we have sum(C_Pln1)=" << sm << " Pq0="<<Pq0(0,0)<<" and sum(Pbin)="<< bl::sum(Pbin(bl::Range::all(),0)) << endl;
+  
+  if (mpi.rank==mpi.master) 
+    return py::make_tuple(_C_Pln2_, _C_Pln1_, _C_Pln0_, _Pbin_, _Pq0_);
+  else{
+    py::array_t<double> _C_Pln2_( {1,1,1,1,1,1} );// fake empty output in order not to copy huge data on all cores.
+    py::array_t<double> _C_Pln1_({1,1,1,1} );
+    py::array_t<double> _C_Pln0_({1,1});
+    return py::make_tuple(_C_Pln2_, _C_Pln1_, _C_Pln0_, _Pbin_, _Pq0_);
+  }
+}
+
+py::tuple sample_combined_discrete2(std::ostream& log, py::array_t<double>& qx,
+				    double lmbda, const std::vector<double>& lmbda_spct, const params& p, py::array_t<double>& kx, py::array_t<double>& epsx, 
+				    py::array_t<int>& diagsG, 
+				    const TdiagSign& diagSign,
+				    const std::vector<std::vector<std::vector<int> > >& Loop_index, const std::vector<std::vector<std::vector<int> > >& Loop_type,
+				    py::array_t<int>& Vtype, py::array_t<int>& indx, py::array_t<double>& _kxb_,
+				    py::array_t<std::complex<double> >& _Vertex_, py::array_t<std::complex<double> >& _Ker_iOm_lt_, 
+				    my_mpi& mpi)
+{
+  ConvertDiags_ cd(diagsG,kx,epsx,Vtype,indx, qx);
+  
+  py::array_t<double> _Pbin_( {p.Nt, cd.qx.extent(0)} );
+  py::buffer_info info_N = _Pbin_.request();
+  bl::Array<double,2> Pbin((double*)info_N.ptr, bl::shape(info_N.shape[0],info_N.shape[1]), bl::neverDeleteData);
+  Gk_HF Gk(p.beta, p.kF, cd.kx, cd.epsx);   // Hartree-Fock non-interacting green's function
+  
+  py::buffer_info info_kxb = _kxb_.request();
+  bl::Array<double,1> kxb((double*)info_kxb.ptr, info_kxb.shape[0], bl::neverDeleteData);
+
+  //Vertex = zeros( ( Nthbin, len(kxb)-1, len(qx), Nw ), dtype=complex)
+  py::buffer_info info_V = _Vertex_.request();
+  bl::Array<std::complex<double>,4> Vertex( (std::complex<double>*)info_V.ptr, bl::shape(info_V.shape[0],info_V.shape[1],info_V.shape[2],info_V.shape[3]),  bl::neverDeleteData);
+  if (info_V.shape[0] != p.Nthbin){ log << "ERROR : first dimension of Vertex is wrong : "<< info_V.shape[0] << " instead of "<< p.Nthbin;}
+  if (info_V.shape[1] != kxb.extent(0)-1){ log << "ERROR : second dimension of Vertex is wrong " << info_V.shape[1] << " instead of " << kxb.extent(0)-1 << std::endl; };
+  if (info_V.shape[2] != cd.qx.extent(0)){ log  << "ERROR : third dimension of Vertex is wrong " << info_V.shape[2] << " instead of " << cd.qx.extent(0) << std::endl; }
+  //Ker_iOm_lt[:Nw,Nlt+1]
+  py::buffer_info info_K = _Ker_iOm_lt_.request();
+  bl::Array<std::complex<double>,2> Ker_iOm_lt( (std::complex<double>*)info_K.ptr, bl::shape(info_K.shape[0], info_K.shape[1]),  bl::neverDeleteData);
+  if (info_K.shape[1] != p.Nlt+1) {log << "ERROR : second dimension of Ker_iOm_lt is wrong " << info_K.shape[1] << " instead of " << p.Nlt+1 << std::endl;}
+  int Nw = info_K.shape[0];
+  if (info_V.shape[3] != Nw ) {log << "ERROR : Ker_iOm_lt and Vertex have different number of Matsubara points " << info_V.shape[3] << Nw << std::endl;}
+      
+  py::array_t<double> _C_Pln2_( {cd.qx.extent(0),Nw+1} ); // C_Pln2(qx.extent(0), Nw);
+  py::buffer_info iP = _C_Pln2_.request();
+  bl::Array<double,2> C_Pln2((double*)iP.ptr, bl::shape(iP.shape[0],iP.shape[1]), bl::neverDeleteData);
+
+  py::array_t<double> _C_Pln1_( {cd.qx.extent(0),Nw+1} ); // C_Pln1(qx.extent(0), Nw)
+  py::buffer_info iP1 = _C_Pln1_.request();
+  bl::Array<double,2> C_Pln1((double*)iP1.ptr, bl::shape(iP1.shape[0],iP1.shape[1]), bl::neverDeleteData);
+
+  py::array_t<double> _C_Pln0_( {cd.qx.extent(0),Nw+1} ); // C_Pln0(qx.extent(0), Nlt+1)
+  py::buffer_info iP0 = _C_Pln0_.request();
+  bl::Array<double,2> C_Pln0((double*)iP0.ptr, bl::shape(iP0.shape[0],iP0.shape[1]), bl::neverDeleteData);
+
+
+  BKdataAttachVertex BKdata(C_Pln2, C_Pln1, C_Pln0, kxb, cd.Vtype, Vertex, Ker_iOm_lt);
+
+  py::array_t<double> _Pq0_( {cd.qx.extent(0), 2} );
+  py::buffer_info info_pq = _Pq0_.request();
+  bl::Array<double,2> Pq0((double*)info_pq.ptr, bl::shape(info_pq.shape[0],info_pq.shape[1]), bl::neverDeleteData);
+  
+  sample_combined_wBK(BKdata, Pbin, Pq0, log, cd.qx, lmbda, lmbda_spct, Gk, p, cd.diagsG, diagSign, Loop_index, Loop_type, cd.Vtype, mpi);
+
+  if (mpi.rank==mpi.master) 
+    return py::make_tuple(_C_Pln2_, _C_Pln1_, _C_Pln0_, _Pbin_, _Pq0_);
+  else{
+    py::array_t<double> _C_Pln2_({1,1});// fake empty output in order not to copy huge data on all cores.
+    py::array_t<double> _C_Pln1_({1,1});
+    py::array_t<double> _C_Pln0_({1,1});
+    return py::make_tuple(_C_Pln2_, _C_Pln1_, _C_Pln0_, _Pbin_, _Pq0_);
+  }
+}
+
+
+// correct1
 py::tuple sample_static_Q0W0_VHFC(double Q_external, std::ostream& log, double lmbda, const std::vector<double>& lmbda_spct, const params& p, py::array_t<double>& kx, py::array_t<double>& epsx, 
-				  py::array_t<int>& diagsG, //py::array_t<double>& diagSign,
-				  const std::vector<std::vector<int> >& diagSign,
+				  py::array_t<int>& diagsG, 
+				  const TdiagSign& diagSign,
 				  const std::vector<std::vector<std::vector<int> > >& Loop_index, const std::vector<std::vector<std::vector<int> > >& Loop_type,
 				  py::array_t<int>& Vtype, py::array_t<int>& indx, py::array_t<double>& _kxb_, my_mpi& mpi)
 {
@@ -713,6 +883,11 @@ py::tuple sample_static_Q0W0_VHFC(double Q_external, std::ostream& log, double l
   py::array_t<double> _Pbin_( p.Nt );
   py::buffer_info info_N = _Pbin_.request();
   bl::Array<double,2> Pbin((double*)info_N.ptr, bl::shape(p.Nt,1), bl::neverDeleteData);
+
+  py::array_t<double> _Pbin2_( p.Nt );
+  py::buffer_info info_N2 = _Pbin2_.request();
+  bl::Array<double,2> Pbin2((double*)info_N2.ptr, bl::shape(p.Nt,1), bl::neverDeleteData);
+  
   Gk_HF Gk(p.beta, p.kF, cd.kx, cd.epsx);   // Hartree-Fock non-interacting green's function
   
   py::buffer_info info_kxb = _kxb_.request();
@@ -723,18 +898,20 @@ py::tuple sample_static_Q0W0_VHFC(double Q_external, std::ostream& log, double l
   
   BaymKadanoff_Q0W0_Data BKdata(C_Pln, kxb, Q_external);
 
-  sample_static_fastC_combined(BKdata, Pbin, log, lmbda, lmbda_spct, Gk, p, cd.diagsG, diagSign, Loop_index, Loop_type, cd.Vtype, mpi);
+  sample_static_fastC_combined(BKdata, Pbin, Pbin2, log, lmbda, lmbda_spct, Gk, p, cd.diagsG, diagSign, Loop_index, Loop_type, cd.Vtype, mpi);
   
   if (mpi.rank==mpi.master) 
-    return py::make_tuple(_C_Pln_, _Pbin_);
+    return py::make_tuple(_C_Pln_, _Pbin_, _Pbin2_);
   else{
     py::array_t<double> _C_Pln_( {1,1,1,1} );// fake empty output in order not to copy huge data on all cores.
-    return py::make_tuple(_C_Pln_, _Pbin_);
+    return py::make_tuple(_C_Pln_, _Pbin_, _Pbin2_);
   }
 }
+
+//correct2
 py::tuple sample_static_Q0W0_VSHFC(double Q_external, std::ostream& log, double lmbda, const std::vector<double>& lmbda_spct, const params& p, py::array_t<double>& kx, py::array_t<double>& epsx, 
-				  py::array_t<int>& diagsG, //py::array_t<double>& diagSign,
-				  const std::vector<std::vector<int> >& diagSign,
+				  py::array_t<int>& diagsG, 
+				  const TdiagSign& diagSign,
 				  const std::vector<std::vector<std::vector<int> > >& Loop_index, const std::vector<std::vector<std::vector<int> > >& Loop_type,
 				  py::array_t<int>& Vtype, py::array_t<int>& indx, py::array_t<double>& _kxb_, my_mpi& mpi)
 {
@@ -743,6 +920,11 @@ py::tuple sample_static_Q0W0_VSHFC(double Q_external, std::ostream& log, double 
   py::array_t<double> _Pbin_( p.Nt );
   py::buffer_info info_N = _Pbin_.request();
   bl::Array<double,2> Pbin((double*)info_N.ptr, bl::shape(p.Nt,1), bl::neverDeleteData);
+  
+  py::array_t<double> _Pbin2_( p.Nt );
+  py::buffer_info info_N2 = _Pbin2_.request();
+  bl::Array<double,2> Pbin2((double*)info_N2.ptr, bl::shape(p.Nt,1), bl::neverDeleteData);
+  
   Gk_HF Gk(p.beta, p.kF, cd.kx, cd.epsx);   // Hartree-Fock non-interacting green's function
   
   py::buffer_info info_kxb = _kxb_.request();
@@ -753,19 +935,20 @@ py::tuple sample_static_Q0W0_VSHFC(double Q_external, std::ostream& log, double 
 
   BaymKadanoff_Symmetric_Q0W0_Data BKdata(C_Pln, kxb, Q_external);
 
-  sample_static_fastC_combined(BKdata, Pbin, log, lmbda, lmbda_spct, Gk, p, cd.diagsG, diagSign, Loop_index, Loop_type, cd.Vtype, mpi);
+  sample_static_fastC_combined(BKdata, Pbin, Pbin2, log, lmbda, lmbda_spct, Gk, p, cd.diagsG, diagSign, Loop_index, Loop_type, cd.Vtype, mpi);
   
   if (mpi.rank==mpi.master) 
-    return py::make_tuple(_C_Pln_, _Pbin_);
+    return py::make_tuple(_C_Pln_, _Pbin_, _Pbin2_);
   else{
     py::array_t<double> _C_Pln_( {1,1,1,1} );// fake empty output in order not to copy huge data on all cores.
-    return py::make_tuple(_C_Pln_, _Pbin_);
+    return py::make_tuple(_C_Pln_, _Pbin_, _Pbin2_);
   }
 }
 
+//correct3
 py::tuple sample_static_Q0W0_HFC(double Q_external, std::ostream& log, double lmbda, const std::vector<double>& lmbda_spct, const params& p, py::array_t<double>& kx, py::array_t<double>& epsx, 
-				 py::array_t<int>& diagsG, //py::array_t<double>& diagSign,
-				 const std::vector<std::vector<int> >& diagSign,
+				 py::array_t<int>& diagsG, 
+				 const TdiagSign& diagSign,
 				 const std::vector<std::vector<std::vector<int> > >& Loop_index, const std::vector<std::vector<std::vector<int> > >& Loop_type,
 				 py::array_t<int>& Vtype, py::array_t<int>& indx, my_mpi& mpi)
 {
@@ -774,6 +957,11 @@ py::tuple sample_static_Q0W0_HFC(double Q_external, std::ostream& log, double lm
   py::array_t<double> _Pbin_( p.Nt );
   py::buffer_info info_N = _Pbin_.request();
   bl::Array<double,2> Pbin((double*)info_N.ptr, bl::shape(p.Nt,1), bl::neverDeleteData);
+  
+  py::array_t<double> _Pbin2_( p.Nt );
+  py::buffer_info info_N2 = _Pbin2_.request();
+  bl::Array<double,2> Pbin2((double*)info_N2.ptr, bl::shape(p.Nt,1), bl::neverDeleteData);
+  
   Gk_HF Gk(p.beta, p.kF, cd.kx, cd.epsx);   // Hartree-Fock non-interacting green's function
   
   py::array_t<double> _C_Pln_( {1,1} );
@@ -781,9 +969,9 @@ py::tuple sample_static_Q0W0_HFC(double Q_external, std::ostream& log, double lm
   bl::Array<double,2> C_Pln((double*)info_P.ptr, bl::shape(info_P.shape[0],info_P.shape[1]), bl::neverDeleteData);
   Standard_Q0W0_Data BKdata(C_Pln, Q_external);
 
-  sample_static_fastC_combined(BKdata, Pbin, log, lmbda, lmbda_spct, Gk, p, cd.diagsG, diagSign, Loop_index, Loop_type, cd.Vtype, mpi);
+  sample_static_fastC_combined(BKdata, Pbin, Pbin2, log, lmbda, lmbda_spct, Gk, p, cd.diagsG, diagSign, Loop_index, Loop_type, cd.Vtype, mpi);
   
-  return py::make_tuple(_C_Pln_, _Pbin_);
+  return py::make_tuple(_C_Pln_, _Pbin_, _Pbin2_);
 }
 
 /*
@@ -876,7 +1064,7 @@ py::tuple sample_Density_HFC(std::ostream& log, double lmbda, const std::vector<
 }
  */
 py::tuple sample_Density_HFC(std::ostream& log, double lmbda, const std::vector<double>& lmbda_spct, const params& p, py::array_t<double>& kx, py::array_t<double>& epsx, 
-			    py::array_t<int>& diagsG, const std::vector<std::vector<int>>& diagSign,
+			    py::array_t<int>& diagsG, const TdiagSign& diagSign,
 			    const std::vector<std::vector<std::vector<int> > >& Loop_index, const std::vector<std::vector<std::vector<int> > >& Loop_type,
 			    py::array_t<int>& Vtype, py::array_t<int>& indx, my_mpi& mpi)
 {
@@ -1150,6 +1338,8 @@ PYBIND11_MODULE(samplewj,m) {
     .def_readwrite("cutoffq", &params::cutoffq,  "Cutoff for independent momentum Q")
     .def_readwrite("Nitt",    &params::Nitt,     "Total number of MC -steps")
     .def_readwrite("V0norm",  &params::V0norm,   "The value of measuring diagram")
+    .def_readwrite("Toccurence",&params::Toccurence,"How often to check that V0norm is good")
+    .def_readwrite("lmbda_counter_scale",&params::lmbda_counter_scale, "Allows one to switch off interaction counter-terms")
     .def_readwrite("V0exp",   &params::V0exp,    "The value of the exponent for measuring diagram")
     .def_readwrite("Pr",      &params::Pr,       "List of probabilities to make each of the MC steps")
     .def_readwrite("Nq",      &params::Nq,       "Number of independent momentum Q-points")
@@ -1163,30 +1353,33 @@ PYBIND11_MODULE(samplewj,m) {
     .def_readwrite("Nwarm",   &params::Nwarm,    "How many warm-up steps")
     .def_readwrite("lmbdat",  &params::lmbdat,    "Parameter for reweighting time.")
     .def_readwrite("Nthbin",  &params::Nthbin,    "Number of bins for cos(theta) in computing vertex function.")// 8
-    .def_readwrite("Nkbin",   &params::Nkbin,     "Number of bins for internal momentum k in computing vertex function.")// 50
+    //.def_readwrite("Nkbin",   &params::Nkbin,     "Number of bins for internal momentum k in computing vertex function.")// 50
     .def_readwrite("Nlt",     &params::Nlt,       "Number of Legendre Polynomials for expansion of time.")      // 20
     .def_readwrite("Nlq",     &params::Nlq,       "Numbef of Legendre Polynomials for expansion of external momentum q")// 18
     ;
   
-  m.def("sample_static_fast_HFC", &sample_static_fast_HFC);   // DC-not dynamic, not-BaymKadanoff
-  m.def("sample_static_fast_VHFC", &sample_static_fast_VHFC); // DC-not dynamic,     BaymKadanoff
-  m.def("sample_static_fast_HFC", &sample_static_fast_HFC);   // DC-not dynamic, not-BaymKadanoff
-  m.def("sample_static_fast_VHFC", &sample_static_fast_VHFC); // DC-not dynamic,     BaymKadanoff
+  m.def("sample_static_fast_HFC",      &sample_static_fast_HFC);     // DC-not dynamic, not-BaymKadanoff
+  m.def("sample_static_fast_VHFC",     &sample_static_fast_VHFC);    // DC-not dynamic,     BaymKadanoff
+  m.def("sample_static_Discrete_HFC",  &sample_static_Discrete_HFC); // discrete q,     non-Baym Kadanoff
+  m.def("sample_static_Discrete_VHFC", &sample_static_Discrete_VHFC);// discrete q,         Baym-Kadanoff
+//m.def("sample_static_fast_HFC", &sample_static_fast_HFC);   // DC-not dynamic, not-BaymKadanoff
+//m.def("sample_static_fast_VHFC", &sample_static_fast_VHFC); // DC-not dynamic,     BaymKadanoff
+
+  m.def("sample_Q0W0", &sample_Q0W0);
+  m.def("sample_combined_discrete", &sample_combined_discrete);
+  m.def("sample_combined_discrete2", &sample_combined_discrete2);
+  
+  m.def("sample_static_Q0W0_HFC",     &sample_static_Q0W0_HFC);    // DC-not dynamic, not-BaymKadanoff
+  m.def("sample_static_Q0W0_VHFC",    &sample_static_Q0W0_VHFC);   // DC-not dynamic,     BaymKadanoff
+  m.def("sample_static_Q0W0_VSHFC",   &sample_static_Q0W0_VSHFC);  // DC-not dynamic,     BaymKadanoff-Symmetric from both sides
+  m.def("sample_Discrete_Q0W0_HFC",   &sample_Discrete_Q0W0_HFC);  // using discrete algorithm, q=0,w=0, non-Baym-Kadanof
+  m.def("sample_Discrete_Q0W0_VHFC",  &sample_Discrete_Q0W0_VHFC); // using discrete algorithm, q=0,w=0, Baym-Kadanof
+  m.def("sample_Discrete_Q0W0_VSHFC", &sample_Discrete_Q0W0_VSHFC);// using discrete algorithm, q=0,w=0, symmetric Baym-Kadanof
   
   m.def("sample_static_fast_HFD", &sample_static_fast_HFD);  // DC dynamic,     not-BaymKadanoff
   m.def("sample_static_fast_VHFD", &sample_static_fast_VHFD);// DC dynamic,         BaymKadanoff
-
   m.def("sample_static_Q0W0_VHFD", &sample_static_Q0W0_VHFD); // dynamic, Baym Kadanoff
   m.def("sample_static_Q0W0_HFD", &sample_static_Q0W0_HFD);   // dynamic, non-Baym Kadanoff
-  m.def("sample_static_Q0W0_VHFC", &sample_static_Q0W0_VHFC);   // DC-not dynamic,     BaymKadanoff
-  m.def("sample_static_Q0W0_VSHFC", &sample_static_Q0W0_VSHFC); // DC-not dynamic,     BaymKadanoff-Symmetric from both sides
-  m.def("sample_static_Q0W0_HFC", &sample_static_Q0W0_HFC);     // DC-not dynamic, not-BaymKadanoff
-
-  m.def("sample_static_Discrete_HFC", &sample_static_Discrete_HFC);   // discrete q, non-Baym Kadanoff
-  m.def("sample_static_Discrete_VHFC", &sample_static_Discrete_VHFC); // discrete q, Baym-Kadanoff
-  m.def("sample_Discrete_Q0W0_HFC", &sample_Discrete_Q0W0_HFC);       // using discrete algorithm, q=0,w=0, non-Baym-Kadanof
-  m.def("sample_Discrete_Q0W0_VHFC", &sample_Discrete_Q0W0_VHFC);     // using discrete algorithm, q=0,w=0, Baym-Kadanof
-  m.def("sample_Discrete_Q0W0_VSHFC", &sample_Discrete_Q0W0_VSHFC);   // using discrete algorithm, q=0,w=0, symmetric Baym-Kadanof
   
   //m.def("sample_static_NI", &sample_static_NI);
   //m.def("sample_static_HF", &sample_static_HF);

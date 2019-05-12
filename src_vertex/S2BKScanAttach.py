@@ -1,8 +1,8 @@
 #!/usr/bin/env python
+# @Copyright 2018 Kristjan Haule 
 import os
 from scipy import *
 from pylab import *
-# @Copyright 2018 Kristjan Haule and Kun Chen    
 
 def Run0(QMC_filename,beta,Debug=False):
 

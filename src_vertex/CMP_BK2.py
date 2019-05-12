@@ -1,14 +1,14 @@
 #!/usr/bin/env python
-
-# @Copyright 2018 Kristjan Haule and Kun Chen    
+# @Copyright 2018 Kristjan Haule 
 import re
 import subprocess
 import sys
 
+bin_dir = '~/projects/electronGas/mVDMC16'
+e1 = bin_dir+'/src_vertex/tpvertex.py'
+e2 = bin_dir+'/src_vertex/BKCScanAttach.py'
+
 if __name__ == '__main__':
-    
-    e1 = '~/projects/electronGas/VDMC12/rupc02/src_vertex/tpvertex.py'
-    e2 = '~/projects/electronGas/VDMC12/rupc02/src_vertex/S2BKScanAttach.py'
     
     execfile('params.py')
     for k in p.keys():
@@ -17,8 +17,6 @@ if __name__ == '__main__':
     n0 = 3/(4*pi*rs**3)
 
     for lmbda in p['_lmbdas_']:
-    #lmbda = p['_lmbdas_'][0]
-    #for ii in range(1):
         fo = open('params2.py', 'w')
         fi = open('params.py', 'r')
         for line in fi:
@@ -30,7 +28,7 @@ if __name__ == '__main__':
                 print 'Replacing line', line.strip(), 'with', newline.strip()
             elif m2 is not None:
                 #print line
-                fii = open('Density_order_5_lmbda_'+str(lmbda)+'.dat', 'r')
+                fii = open('Density_order_6_lmbda_'+str(lmbda)+'.dat', 'r')
                 fii.next()
                 line2 = fii.next()
                 m2 = re.search('dmu=\s*([-]?\d\.\d+)', line2)
@@ -46,8 +44,8 @@ if __name__ == '__main__':
         print >> fo, "p['Short'] = True"
         fo.close()
 
-        cmd = 'mpirun '+e1+' > nohup.vertex'
+        cmd = 'mpirun -n 4 '+e1+' > nohup.vertex'
         subprocess.call(cmd,shell=True,stdout=sys.stdout,stderr=sys.stderr)
         
-        cmd = e2 + ' Pcof_lmbda_'+str(lmbda)+'_3_corder_0.npy > lmbda_'+str(lmbda)+'.dat'
+        cmd = e2 + ' '+str(lmbda)
         subprocess.call(cmd,shell=True,stdout=sys.stdout,stderr=sys.stderr)

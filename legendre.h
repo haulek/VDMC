@@ -1,4 +1,4 @@
-// @Copyright 2018 Kristjan Haule and Kun Chen    
+// @Copyright 2018 Kristjan Haule 
 #ifndef _LEGENDRE_
 #define _LEGENDRE_
 #include <iostream>

@@ -1,10 +1,10 @@
 #!/usr/bin/env python
+# @Copyright 2018 Kristjan Haule 
 from scipy import *
 from pylab import *
 from numpy.polynomial import legendre
 from Frequency2Legendre import *
 import samplewj as sw
-# @Copyright 2018 Kristjan Haule and Kun Chen    
 
 def GetOmg():
     norder = 1

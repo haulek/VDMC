@@ -1,4 +1,4 @@
-// @Copyright 2018 Kristjan Haule and Kun Chen    
+// @Copyright 2018 Kristjan Haule 
 #include <iostream>
 #include <assert.h>
 #include <fstream>
@@ -169,7 +169,7 @@ inline Spline1D<T>::Spline1D(const Spline1D& m)
   resize(m.size());
   f = m.f;
   f2 = m.f2;
-  dxi = f.dxi;
+  dxi = m.dxi;
 }
 
 template <class T>

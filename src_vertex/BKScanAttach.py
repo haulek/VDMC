@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# @Copyright 2018 Kristjan Haule and Kun Chen    
+# @Copyright 2018 Kristjan Haule 
 import os
 from scipy import *
 from pylab import *
@@ -17,7 +17,6 @@ def Run0(QMC_filename,beta,Debug=False):
     p0 = load('p0.00.npy')
     print '#', 1, 0, p0[0]
     #result =  '1 '+ str( p0[0] ) + '\n'
-    start_order, MaxOrder = 3,5
     #NCases = [(norder, Corder) for norder in range(start_order,MaxOrder+1) for Corder in [0]+range(2,norder)]
     NCases = [(norder, Corder) for norder in range(start_order,MaxOrder+1) for Corder in range(norder)]
     
@@ -64,4 +63,5 @@ if __name__ == '__main__':
     execfile('params2.py')
     beta = p['beta']
     lmbda = p['lmbda']
+    start_order, MaxOrder = 3, p['MaxOrder']
     Run0(QMC_filename,beta,Debug=True)

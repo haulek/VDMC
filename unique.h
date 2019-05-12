@@ -1,4 +1,4 @@
-// @Copyright 2018 Kristjan Haule and Kun Chen    
+// @Copyright 2018 Kristjan Haule 
 #include <iostream>
 #include <blitz/array.h>
 #include <deque>
@@ -636,6 +636,7 @@ void findUnique_noindx_spct(bl::Array<sint,2>& Gindx, bl::Array<sint,2>& Vindx, 
       }
     }
   }
+
   N0v = iv;
   for (int id=0; id<Ndiags; id++){
     for (int i=1; i<Norder; i++){ // do not add V for the meassuring line
@@ -708,6 +709,7 @@ void findUnique_noindx_spct(bl::Array<sint,2>& Gindx, bl::Array<sint,2>& Vindx, 
   if (debug) log<<std::endl;
   
   if (debug){
+    log<< "id : Gindx="<< endl;
     for (int id=0; id<Ndiags; id++){
       log<<std::setw(3)<<id<<" : ";
       for (int i=0; i<2*Norder; i++){
@@ -715,12 +717,22 @@ void findUnique_noindx_spct(bl::Array<sint,2>& Gindx, bl::Array<sint,2>& Vindx, 
       }
       log<<std::endl;
     }
+    log<< "id : Vindx="<< endl;
+    for (int id=0; id<Ndiags; id++){
+      log<<std::setw(3)<<id<<" : ";
+      for (int i=1; i<Norder; i++){
+	log<<std::setw(3)<<static_cast<int>(Vindx(id,i))<<" ";
+      }
+      log<<std::endl;
+    }
+    /*
     for (int ii=0; ii<gindx.extent(0); ++ii){
       log<<"G "<<ii<<" : ("<<gindx(ii)[0]<<","<<gindx(ii)[1]<<")"<<std::endl;
     }
     for (int ii=0; ii<vindx.extent(0); ++ii){
       log<<"V "<<ii<<" : ("<<vindx(ii)[0]<<","<<vindx(ii)[1]<<")"<<std::endl;
     }
+    */
   }
   /*
   if (istart_fermi>0){

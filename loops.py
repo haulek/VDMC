@@ -1,6 +1,6 @@
+# @Copyright 2018 Kristjan Haule 
 from scipy import *
 import re
-# @Copyright 2018 Kristjan Haule and Kun Chen
 
 def to_cycles(perm):
     "breaks permutation into cycles, which represent fermionic loops"

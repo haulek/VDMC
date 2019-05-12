@@ -1,4 +1,4 @@
-// @Copyright 2018 Kristjan Haule and Kun Chen    
+// @Copyright 2018 Kristjan Haule 
 #include <iostream>
 #include <sstream>
 #include <deque>

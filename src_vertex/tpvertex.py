@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# @Copyright 2018 Kristjan Haule and Kun Chen    
+# @Copyright 2018 Kristjan Haule 
 import sys
 import os
 import time
@@ -199,10 +199,10 @@ def ConstructVertex(p, Short=False):
         rank = 0
         master = 0
         
-    lmax    = p['lmax']  # expansion for the angle
-    lmax_t  = p['lmax_t']  # expansion order for time variable
-    lmax_k  = p['lmax_k']  # expansion order for momentum variable k
-    lmax_q  = p['lmax_q']  # expansion order for external momentum variable q
+    lmax    = p['lmax']      # expansion for the angle
+    lmax_t  = p['lmax_t']    # expansion order for time variable
+    lmax_k  = p['lmax_k']    # expansion order for momentum variable k
+    lmax_q  = p['lmax_q']    # expansion order for external momentum variable q
     Nq      = p['Nq']
     Nk      = p['Nk']
     Nt      = p['Nt']
@@ -212,8 +212,9 @@ def ConstructVertex(p, Short=False):
     cutoffk = p['cutoffk']
     beta    = p['beta']
     lmbda   = p['lmbda']
-    dmu     = p['dmu']
-    
+    dmu     = p['dmu']     
+    kF = (9*pi/4.)**(1./3.) /p['rs']
+        
     small = 1e-9     # how small should be the matrix element to be ignored
     Nlast = ntail/10 # high frequency moment is computed from a fraction of last points
     
@@ -309,7 +310,8 @@ def ConstructVertex(p, Short=False):
     X_qx = (2*qx[:]/cutoffq-1.)                           # for computing Legendres in qx variable
 
     iqs,iqe,sendcounts,displacements = mpiSplitArray( rank, size, len(qx) )
-        
+    print 'iqs:iqe=', str(iqs)+':'+str(iqe)
+    
     p0 = zeros( (iqe-iqs, len(iOm)), dtype=float)  # P0 bubble
     p2 = zeros( (iqe-iqs, len(iOm)), dtype=float)  # second order diagram
 
@@ -381,6 +383,7 @@ def ConstructVertex(p, Short=False):
             Rc_minus_constant[:,0] -= 1.0        # subtracting the constant, which subtacts the original diagram. Now vertex Rc goes to zero in infinity.
             save('Rc.00', Rc_minus_constant) # Rc[ik,l]
             save('p0.00', p2[iq,:])  # p2[iw]
+            save('b0.00', p02[0,:,:]) # bubble
             
         if DISCRETE:
             #save('p2.'+str(iq+iqs), p2[iq,:])
@@ -673,7 +676,11 @@ def ConstructVertex(p, Short=False):
     
 if __name__ == '__main__':
     Short=False
-    execfile('params2.py')
+    if os.path.isfile('params2.py'):
+        execfile('params2.py')
+    else:
+        execfile('params.py')
+    
     for k in p.keys():
         print k, p[k]
         exec( k+' = '+str(p[k]) )
@@ -685,6 +692,9 @@ if __name__ == '__main__':
     print 'cutoffk=', cutoffk
     print 'cutoffq=', cutoffq
     print 'lmbda=', lmbda
+    if dmus is not None and dmus.has_key(lmbda):
+        dmu = dmus[lmbda]
+        p['dmu']=dmu
     print 'dmu=', dmu
 
     #Check_Vkk()

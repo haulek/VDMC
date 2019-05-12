@@ -1,4 +1,4 @@
-// @Copyright 2018 Kristjan Haule and Kun Chen    
+// @Copyright 2007 Kristjan Haule
 // 
 #ifndef __TIMER__
 #define __TIMER__

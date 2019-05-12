@@ -1,7 +1,7 @@
+# @Copyright 2018 Kristjan Haule 
 from scipy import *
 import glob
 import os
-# @Copyright 2018 Kristjan Haule and Kun Chen
 
 def to_cycles(perm):
     #pi = {i+1: perm[i] for i in range(len(perm))}

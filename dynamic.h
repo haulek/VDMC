@@ -1,4 +1,4 @@
-// @Copyright 2018 Kristjan Haule and Kun Chen    
+// @Copyright 2018 Kristjan Haule 
 inline double Type2VertexContribution(int id, int i, bool changed_Vi,
 				      const bl::Array<int,2>& vertex_companion, const bl::Array<int,2>& changed_V,
 				      const bl::Array<double,2>& W_trial, const bl::Array<double,2>& V_eqv_trial,

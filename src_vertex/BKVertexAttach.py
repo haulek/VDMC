@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# @Copyright 2018 Kristjan Haule and Kun Chen    
+# @Copyright 2018 Kristjan Haule 
 import os
 from scipy import *
 from pylab import *

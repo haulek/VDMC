@@ -1,3 +1,4 @@
+// @Copyright 2018 Kristjan Haule 
 //#include <iostream>
 #include <blitz/array.h>
 //#include <algorithm>
@@ -5,7 +6,6 @@
 //#include "timer.h"
 //#include "legendre.h"
 using namespace blitz;
-// @Copyright 2018 Kristjan Haule and Kun Chen    
 
 #ifdef NO_APPEND_FORTRAN
 # define FNAME(x) x

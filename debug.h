@@ -1,5 +1,4 @@
-// @Copyright 2018 Kristjan Haule and Kun Chen    
-
+// @Copyright 2018 Kristjan Haule 
 void VerifyCurrentState10(int itt, double beta, double lmbda_spct, double PQ_original, const bl::Array<bl::TinyVector<double,3>,1>& momentum, bl::Array<double,1>& times,
 			  //const bl::Array<bl::TinyVector<double,3>,1>& mom_g, const bl::Array<bl::TinyVector<double,3>,1>& mom_v,
 			  const bl::Array<unsigned short,2>& diagsG, const bl::Array<unsigned short,2>& i_diagsG,

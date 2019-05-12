@@ -1,4 +1,4 @@
-// @Copyright 2018 Kristjan Haule and Kun Chen    
+// @Copyright 2007-2017 Kristjan Haule
 #ifndef _TAN_MESH
 #define _TAN_MESH
 

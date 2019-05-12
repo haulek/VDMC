@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-# @Copyright 2018 Kristjan Haule and Kun Chen
+# @Copyright 2018 Kristjan Haule 
 Parallel = True
 from copy import deepcopy
 from pylab import *
@@ -16,6 +16,20 @@ import sys
 import io
 import os
 from kmesh import *
+
+def dToccurence(Norder, Counter_order):
+    Toccurence = 1.0
+    if (Norder,Counter_order) == (4,0):
+        Toccurence = 10.
+    if (Norder,Counter_order) == (5,4):
+        Toccurence = 10.
+    if (Norder,Counter_order) == (5,0):
+        Toccurence = 80.
+    if (Norder,Counter_order) == (6,5):
+        Toccurence = 100.
+    if (Norder,Counter_order) == (6,0):
+        Toccurence = 200.
+    return Toccurence
 
 def mpiSplitArray(rank,size,leng):
     def SplitArray(irank,size,leng):
@@ -165,168 +179,169 @@ def GetCounterTermPolarization(hf, fln, Vtype, my_mpi, p, dmu, lmbda, kx, epsx):
     if Parallel:
         comm.Barrier()
 
-def sample_static(lmbda, lmbda_spct, dmu, Norder, Counter_order, BKA=False, Hugenholtz=True, DynamicCT=False, Debug=False):
-    """ Takes care of unscreened static interaction only.
-        Samples polarization for any t and Q by Metropolis.
-        The normalization is done by adding a constant diagram, which should not suffers from ergodicity.
-    """
-    HF=True
-    norder = Norder  # real order of diagram
-    if Counter_order >= 2 : # when we deal with counter-terms (Counter_order!=0 or !=1), their order is actually smaller
-        norder = Counter_order
-    
-    my_mpi = sw.my_mpi()
-    if Parallel:
-        comm = MPI.COMM_WORLD
-        my_mpi.size = comm.Get_size()
-        my_mpi.rank = comm.Get_rank()
-    
-    p = sw.params()
-    if BKA:
-        p.Nthbin  = 10
-        p.Nkbin   = 50
-    p.Nlt     = 24
-    p.Nlq     = 18
-    
-    p.kF      = kF
-    p.beta    = beta
-    p.cutoffq = cutoffq
-    p.cutoffk = cutoffk
-    
-    p.Nitt    = int(Nitt) #50000000 #100000000
-    
-    p.V0norm  = 40**norder * 1e-3 * (10./beta)**2 * (2.1*kF)**norder
-    p.V0exp   = 4.
-    p.Pr      = [0.65,0.25,0.1]
-    p.Qring   = 0.5
-    p.dRk     = 1.3
-    p.dkF     = 0.5*kF
-    p.iseed   = random.randint(2**10)+my_mpi.rank*10
-    p.tmeassure = 2
-    p.Ncout    = Ncout # 500000
-    p.Nwarm    = 10000
-    p.lmbdat   = 0.0
-    p.Nq       = Nq
-    p.Nt       = 10
-    
-    if Hugenholtz:
-        filename = sinput+'/loops_Pdiags.'+str(Norder)+'_cworder_'+str(Counter_order)+'_'
-    else:
-        if Counter_order==0:
-            filename = sinput+'/loops_Pdiags.'+str(Norder)+'_nobubble_'
-        elif Counter_order==1:
-            filename = sinput+'/loops_Pdiags.'+str(Norder)+'_bubbles_'
-        else:
-            filename = sinput+'/loops_Pdiags.'+str(Norder)+'_corder_'+str(Counter_order)+'_'
-        
+#def sample_static(lmbda, lmbda_spct, dmu, Norder, Counter_order, BKA=False, Hugenholtz=True, DynamicCT=False, Debug=False):
+#    """ Takes care of unscreened static interaction only.
+#        Samples polarization for any t and Q by Metropolis.
+#        The normalization is done by adding a constant diagram, which should not suffers from ergodicity.
+#    """
+#    HF=True
+#    norder = Norder  # real order of diagram
+#    if Counter_order >= 2 : # when we deal with counter-terms (Counter_order!=0 or !=1), their order is actually smaller
+#        norder = Counter_order
+#    
+#    my_mpi = sw.my_mpi()
+#    if Parallel:
+#        comm = MPI.COMM_WORLD
+#        my_mpi.size = comm.Get_size()
+#        my_mpi.rank = comm.Get_rank()
+#    
+#    p = sw.params()
+#    if BKA:
+#        p.Nthbin  = Nthbin #10
+#        #p.Nkbin   = 50
+#    p.Nlt     = 24
+#    p.Nlq     = 18
+#    
+#    p.kF      = kF
+#    p.beta    = beta
+#    p.cutoffq = cutoffq
+#    p.cutoffk = cutoffk
+#    
+#    p.Nitt    = int(Nitt) #50000000 #100000000
+#    
+#    p.V0norm  = 40**norder * 1e-3 * (10./beta)**2 * (2.1*kF)**norder
+#    p.V0exp   = 4.
+#    p.Pr      = [0.65,0.25,0.1]
+#    p.Qring   = 0.5
+#    p.dRk     = 1.3
+#    p.dkF     = 0.5*kF
+#    p.iseed   = random.randint(2**10)+my_mpi.rank*10
+#    p.tmeassure = 2
+#    p.Ncout    = Ncout # 500000
+#    p.Nwarm    = 10000
+#    p.lmbdat   = 0.0
+#    p.Nq       = Nq
+#    p.Nt       = 10
+#    
+#    if Hugenholtz:
+#        filename = sinput+'/loops_Pdiags.'+str(Norder)+'_cworder_'+str(Counter_order)+'_'
+#    else:
+#        if Counter_order==0:
+#            filename = sinput+'/loops_Pdiags.'+str(Norder)+'_nobubble_'
+#        elif Counter_order==1:
+#            filename = sinput+'/loops_Pdiags.'+str(Norder)+'_bubbles_'
+#        else:
+#            filename = sinput+'/loops_Pdiags.'+str(Norder)+'_corder_'+str(Counter_order)+'_'
+#        
+#
+#    if not BKA:
+#        (diagsG, diagSign, Loop_index, Loop_type, Loop_vertex, diagVertex, indx, Vtype) = GetPDiags(filename, BKremove='')
+#    elif BKA==1:
+#        (diagsG, diagSign, Loop_index, Loop_type, Loop_vertex, diagVertex, indx, Vtype) = GetPDiags(filename, BKremove='right')
+#    elif BKA==2:
+#        (diagsG, diagSign, Loop_index, Loop_type, Loop_vertex, diagVertex, indx, Vtype) = GetPDiags(filename, BKremove='both')
+#    else:
+#        print 'ERROR Unrecognized BKA in sample_static_Q0'
+#        sys.exit(1)
+#
+#    if (len(diagsG)==0):
+#        print 'Nothing to do'
+#        return
+#
+#    if len(Vtype)==0:
+#        Vtype = zeros((len(diagsG),norder))
+#    if (rank==master):
+#        fout = io.open('snohup_'+str(Norder)+'_corder_'+str(Counter_order), 'ab')
+#        print >> fout, '# time: ', datetime.datetime.now(), 'iseed=', p.iseed, " running sample_static"
+#        print >> fout, 'rs=', rs, 'kF=', kF, 'beta=', beta, 'MaxOrder=', MaxOrder, 'cutoffq=', cutoffq, 'cutoffk=', cutoffk, 'dmu_1=', dmu_1
+#    else:
+#        #fout = io.open('snohup.'+str(rank)+'_'+str(Norder)+'_corder_'+str(Counter_order), 'ab')
+#        fout = sys.stdout
+#
+#    print 'Nk=', Nk
+#    kxb = Give_k_mesh(Nk, kF, cutoffk, 0.0)  #extra
+#    dcutoff = p.cutoffk-p.cutoffq
+#    hf = sw.HartreeFock(p.kF, p.cutoffk+dcutoff, p.beta, lmbda, dmu)
+#    kx, epsx = hf.get()
+#
+#    if DynamicCT:
+#        GetCounterTermPolarization(hf, 'Pqt', Vtype, my_mpi, p, dmu, lmbda, kx, epsx)
+#
+#    if BKA==1:
+#        if DynamicCT:
+#            C_Pln, Pbin = sw.sample_static_fast_VHFD(fout, lmbda, lmbda_spct, p, kx, epsx, diagsG, diagSign, Loop_index, Loop_type, Vtype, indx, kxb, my_mpi)
+#        else:
+#            C_Pln, Pbin = sw.sample_static_fast_VHFC(fout, lmbda, lmbda_spct, p, kx, epsx, diagsG, diagSign, Loop_index, Loop_type, Vtype, indx, kxb, my_mpi)
+#    elif BKA==0:
+#        if DynamicCT:
+#            C_Pln, Pbin = sw.sample_static_fast_HFD(fout, lmbda, lmbda_spct, p, kx, epsx, diagsG, diagSign, Loop_index, Loop_type, Vtype, indx, my_mpi)
+#        else:
+#            C_Pln, Pbin = sw.sample_static_fast_HFC(fout, lmbda, lmbda_spct, p, kx, epsx, diagsG, diagSign, Loop_index, Loop_type, Vtype, indx, my_mpi)
+#    else:
+#        print 'ERROR Unrecognized BKA in sample_static'
+#        sys.exit(1)
+#        
+#    if my_mpi.rank == my_mpi.master:
+#        qx = p.cutoffq*(0.5+arange(p.Nq))/p.Nq
+#        savetxt('Pbin_'+str(Norder)+'_corder_'+str(Counter_order), vstack( (qx/kF,Pbin) ).transpose())
+#        if BKA:
+#            save('kxb', kxb)
+#            save('Pcof_'+str(Norder)+'_corder_'+str(Counter_order), C_Pln )
+#        else:
+#            savetxt('Pcof_'+str(Norder)+'_corder_'+str(Counter_order), C_Pln )
+#        
+#        print >> fout, '# time: ', datetime.datetime.now()
+#        
+#        if Debug:
+#            # The mesh in k where points are centered in the middle
+#            tx = p.beta*(0.5+arange(p.Nt))/p.Nt
+#            tx = hstack( ([1e-6],tx) )
+#            
+#            import matplotlib.pyplot as plt
+#            
+#            # Evaluates Legendre Polynomials
+#            Pls = zeros((p.Nlq+1,len(qx)))
+#            for l in range(p.Nlq+1):
+#                Pls[l,:] = special.eval_legendre(l,2*qx/p.cutoffq-1.)
+#            tub = zeros((len(tx),p.Nlt+1))
+#            for l in range(0,p.Nlt+1,2):
+#                tub[:,l] = special.eval_legendre(l,2*tx/p.beta-1.)
+#
+#            if BKA:
+#                C_Pln_large = copy.deepcopy(C_Pln)
+#                
+#                dth = 2.0/p.Nthbin;
+#                dk = array([kxb[ik+1]-kxb[ik] for ik in range(len(kxb)-1)])
+#                C_Pln = zeros((p.Nlt+1,p.Nlq+1))
+#                for lt in range(0,p.Nlt+1,2):
+#                    for lq in range(p.Nlq+1):
+#                        for ik in range(len(kxb)-1):
+#                            C_Pln[lt,lq] += sum(C_Pln_large[:,ik,lt,lq])*dth*dk[ik]
+#            
+#            # Multiplies Legendre Polynomials with the coefficients
+#            Ptq = dot(dot(tub, C_Pln),Pls)
+#            
+#            smallk = 1e-11
+#            p21c = sw.PO2(kF, p.beta, p.cutoffk, p.cutoffq, smallk)
+#            # Calculating the exact integral
+#            Px = zeros((len(tx),p.Nq))
+#            Nt_need = p.Nt/2+2
+#            
+#            for iq,Qa in enumerate(qx):
+#                tau = tx[:Nt_need]
+#                Px[:Nt_need,iq] = hf.P0(Qa,tau)
+#                print Qa, max(Px[:,iq])
+#                    
+#            col=['b','g','r','c','m','y','k','w']
+#            for it in range(p.Nt/2+2):
+#                plt.plot(qx/kF, Px[it,:], ':'+col[it%8], label='t='+str(tx[it])+' exact '+str(my_mpi.rank))
+#                plt.plot(qx/kF, Ptq[it,:], '-'+col[it%8], label='t='+str(tx[it])+' leg.b.'+str(my_mpi.rank))
+#                if it>0:
+#                    plt.plot(qx/kF, Pbin[it-1,:], '.'+col[it%8], label='t='+str(tx[it])+' bin')
+#                
+#            plt.legend(loc='best')
+#            plt.show()
 
-    if not BKA:
-        (diagsG, diagSign, Loop_index, Loop_type, Loop_vertex, diagVertex, indx, Vtype) = GetPDiags(filename, BKremove='')
-    elif BKA==1:
-        (diagsG, diagSign, Loop_index, Loop_type, Loop_vertex, diagVertex, indx, Vtype) = GetPDiags(filename, BKremove='right')
-    elif BKA==2:
-        (diagsG, diagSign, Loop_index, Loop_type, Loop_vertex, diagVertex, indx, Vtype) = GetPDiags(filename, BKremove='both')
-    else:
-        print 'ERROR Unrecognized BKA in sample_static_Q0'
-        sys.exit(1)
-
-    if (len(diagsG)==0):
-        print 'Nothing to do'
-        return
-
-    if len(Vtype)==0:
-        Vtype = zeros((len(diagsG),norder))
-    if (rank==master):
-        fout = io.open('snohup_'+str(Norder)+'_corder_'+str(Counter_order), 'ab')
-        print >> fout, '# time: ', datetime.datetime.now(), 'iseed=', p.iseed, " running sample_static"
-        print >> fout, 'rs=', rs, 'kF=', kF, 'beta=', beta, 'MaxOrder=', MaxOrder, 'cutoffq=', cutoffq, 'cutoffk=', cutoffk, 'dmu_1=', dmu_1
-    else:
-        #fout = io.open('snohup.'+str(rank)+'_'+str(Norder)+'_corder_'+str(Counter_order), 'ab')
-        fout = sys.stdout
-
-    print 'Nk=', Nk
-    kxb = Give_k_mesh(Nk, kF, cutoffk, 0.0)  #extra
-    dcutoff = p.cutoffk-p.cutoffq
-    hf = sw.HartreeFock(p.kF, p.cutoffk+dcutoff, p.beta, lmbda, dmu)
-    kx, epsx = hf.get()
-
-    if DynamicCT:
-        GetCounterTermPolarization(hf, 'Pqt', Vtype, my_mpi, p, dmu, lmbda, kx, epsx)
-
-    if BKA==1:
-        if DynamicCT:
-            C_Pln, Pbin = sw.sample_static_fast_VHFD(fout, lmbda, lmbda_spct, p, kx, epsx, diagsG, diagSign, Loop_index, Loop_type, Vtype, indx, kxb, my_mpi)
-        else:
-            C_Pln, Pbin = sw.sample_static_fast_VHFC(fout, lmbda, lmbda_spct, p, kx, epsx, diagsG, diagSign, Loop_index, Loop_type, Vtype, indx, kxb, my_mpi)
-    elif BKA==0:
-        if DynamicCT:
-            C_Pln, Pbin = sw.sample_static_fast_HFD(fout, lmbda, lmbda_spct, p, kx, epsx, diagsG, diagSign, Loop_index, Loop_type, Vtype, indx, my_mpi)
-        else:
-            C_Pln, Pbin = sw.sample_static_fast_HFC(fout, lmbda, lmbda_spct, p, kx, epsx, diagsG, diagSign, Loop_index, Loop_type, Vtype, indx, my_mpi)
-    else:
-        print 'ERROR Unrecognized BKA in sample_static'
-        sys.exit(1)
-        
-    if my_mpi.rank == my_mpi.master:
-        qx = p.cutoffq*(0.5+arange(p.Nq))/p.Nq
-        savetxt('Pbin_'+str(Norder)+'_corder_'+str(Counter_order), vstack( (qx/kF,Pbin) ).transpose())
-        if BKA:
-            save('kxb', kxb)
-            save('Pcof_'+str(Norder)+'_corder_'+str(Counter_order), C_Pln )
-        else:
-            savetxt('Pcof_'+str(Norder)+'_corder_'+str(Counter_order), C_Pln )
-        
-        print >> fout, '# time: ', datetime.datetime.now()
-        
-        if Debug:
-            # The mesh in k where points are centered in the middle
-            tx = p.beta*(0.5+arange(p.Nt))/p.Nt
-            tx = hstack( ([1e-6],tx) )
-            
-            import matplotlib.pyplot as plt
-            
-            # Evaluates Legendre Polynomials
-            Pls = zeros((p.Nlq+1,len(qx)))
-            for l in range(p.Nlq+1):
-                Pls[l,:] = special.eval_legendre(l,2*qx/p.cutoffq-1.)
-            tub = zeros((len(tx),p.Nlt+1))
-            for l in range(0,p.Nlt+1,2):
-                tub[:,l] = special.eval_legendre(l,2*tx/p.beta-1.)
-
-            if BKA:
-                C_Pln_large = copy.deepcopy(C_Pln)
-                
-                dth = 2.0/p.Nthbin;
-                dk = array([kxb[ik+1]-kxb[ik] for ik in range(len(kxb)-1)])
-                C_Pln = zeros((p.Nlt+1,p.Nlq+1))
-                for lt in range(0,p.Nlt+1,2):
-                    for lq in range(p.Nlq+1):
-                        for ik in range(len(kxb)-1):
-                            C_Pln[lt,lq] += sum(C_Pln_large[:,ik,lt,lq])*dth*dk[ik]
-            
-            # Multiplies Legendre Polynomials with the coefficients
-            Ptq = dot(dot(tub, C_Pln),Pls)
-            
-            smallk = 1e-11
-            p21c = sw.PO2(kF, p.beta, p.cutoffk, p.cutoffq, smallk)
-            # Calculating the exact integral
-            Px = zeros((len(tx),p.Nq))
-            Nt_need = p.Nt/2+2
-            
-            for iq,Qa in enumerate(qx):
-                tau = tx[:Nt_need]
-                Px[:Nt_need,iq] = hf.P0(Qa,tau)
-                print Qa, max(Px[:,iq])
-                    
-            col=['b','g','r','c','m','y','k','w']
-            for it in range(p.Nt/2+2):
-                plt.plot(qx/kF, Px[it,:], ':'+col[it%8], label='t='+str(tx[it])+' exact '+str(my_mpi.rank))
-                plt.plot(qx/kF, Ptq[it,:], '-'+col[it%8], label='t='+str(tx[it])+' leg.b.'+str(my_mpi.rank))
-                if it>0:
-                    plt.plot(qx/kF, Pbin[it-1,:], '.'+col[it%8], label='t='+str(tx[it])+' bin')
-                
-            plt.legend(loc='best')
-            plt.show()
 
 def sample_static_discrete(lmbda, lmbda_spct, dmu, Norder, Counter_order, BKA=False, Hugenholtz=True, DynamicCT=False, Debug=False):
     """ Takes care of unscreened static interaction only.
@@ -345,9 +360,10 @@ def sample_static_discrete(lmbda, lmbda_spct, dmu, Norder, Counter_order, BKA=Fa
         my_mpi.rank = comm.Get_rank()
     
     p = sw.params()
+    p.Toccurence = dToccurence(Norder, Counter_order)
     if BKA:
-        p.Nthbin  = 10
-        p.Nkbin   = 50
+        p.Nthbin  = Nthbin #10
+        #p.Nkbin   = 50
     p.Nlt     = 24
     p.Nlq     = 18
     
@@ -361,9 +377,9 @@ def sample_static_discrete(lmbda, lmbda_spct, dmu, Norder, Counter_order, BKA=Fa
     p.V0norm  = 40**norder * 1e-3 * (10./beta)**2 * (2.1*kF)**norder
     p.V0exp   = 4.
     p.Pr      = [0.65,0.25,0.1]
-    p.Qring   = 0.5
+    p.Qring   = Qring # 0.5
     p.dRk     = 1.3
-    p.dkF     = 0.5*kF
+    p.dkF     = dkF0*kF
     p.iseed   = random.randint(2**10)+my_mpi.rank*10
     p.tmeassure = 2
     p.Ncout    = Ncout # 500000
@@ -440,6 +456,248 @@ def sample_static_discrete(lmbda, lmbda_spct, dmu, Norder, Counter_order, BKA=Fa
         print >> fout, '# time: ', datetime.datetime.now()
 
 
+
+def sample_combined_discrete_heavy(lmbda, lmbda_spct, dmu, Norder, Counter_order, qx, kxb, my_mpi):
+    """ Takes care of unscreened static interaction only.
+        Samples polarization for any t and Q by Metropolis.
+        The normalization is done by adding a constant diagram, which should not suffers from ergodicity.
+    """
+    norder = Norder  # real order of diagram
+    if Counter_order >= 2 : # when we deal with counter-terms (Counter_order!=0 or !=1), their order is actually smaller
+        norder = Counter_order
+    
+    p = sw.params()
+    p.Toccurence = dToccurence(Norder, Counter_order)
+    p.Nthbin  = Nthbin
+    p.Nlt     = Nlt # 24
+    #p.Nlq     = 18
+    p.kF      = kF
+    p.beta    = beta
+    p.cutoffq = cutoffq
+    p.cutoffk = cutoffk
+    p.Nitt    = int(Nitt)
+    p.V0norm  = 40**norder * 1e-3 * (10./beta)**2 * (2.1*kF)**norder
+    p.V0exp   = 4.
+    p.Pr      = [0.65,0.25,0.1]
+    p.Qring   = Qring # 0.5
+    p.dRk     = 1.3
+    p.dkF     = dkF0*kF  # before it was 0.5*kF
+    p.iseed   = random.randint(2**10)+my_mpi.rank*10
+    p.tmeassure = 2
+    p.Ncout    = Ncout
+    p.Nwarm    = 10000
+    p.lmbdat   = 0.0
+    p.Nq       = Nq
+    p.Nt       = 10
+
+    filename = sinput+'/loops_Pdiags.'+str(Norder)+'_cworder_'+str(Counter_order)+'_'
+
+    (diagsG, diagSign, Loop_index, Loop_type, Loop_vertex, diagVertex, indx, Vtype) = GetPDiags(filename, BKremove='')
+    
+    if len(Vtype)==0:
+        Vtype = zeros((len(diagsG),norder))
+    if (rank==master):
+        fout = io.open('snohup_'+str(Norder)+'_corder_'+str(Counter_order), 'ab')
+        print >> fout, '# time: ', datetime.datetime.now(), 'iseed=', p.iseed, " running sample_static_discrete"
+        print >> fout, 'rs=', rs, 'kF=', kF, 'beta=', beta, 'MaxOrder=', MaxOrder, 'cutoffq=', cutoffq, 'cutoffk=', cutoffk, 'dmu_1=', dmu_1
+    else:
+        #fout = io.open('snohup.'+str(rank)+'_'+str(Norder)+'_corder_'+str(Counter_order), 'ab')
+        fout = sys.stdout
+
+    dcutoff = p.cutoffk-p.cutoffq
+    hf = sw.HartreeFock(p.kF, p.cutoffk+dcutoff, p.beta, lmbda, dmu)
+    kx, epsx = hf.get()
+
+    (C_Pln2, C_Pln1, C_Pln0, Pbin, Pq0) = sw.sample_combined_discrete(fout, qx, lmbda, lmbda_spct, p, kx, epsx,
+                                                                      diagsG, diagSign, Loop_index, Loop_type, Vtype, indx, kxb, my_mpi)
+    
+    if my_mpi.rank == my_mpi.master:
+        savetxt('Pbin_'+str(Norder)+'_corder_'+str(Counter_order), vstack( (qx/kF,Pbin) ).transpose())
+        save('kxb', kxb)
+        save('Pcof2_'+str(Norder)+'_corder_'+str(Counter_order), C_Pln2 )
+        save('Pcof1_'+str(Norder)+'_corder_'+str(Counter_order), C_Pln1 )
+        save('Pcof0_'+str(Norder)+'_corder_'+str(Counter_order), C_Pln0 )
+        
+        savetxt('Pq0_'+str(Norder)+'_corder_'+str(Counter_order), vstack( (qx/kF,Pq0[:,0],Pq0[:,1]) ).transpose())
+        # (Nthbin, Nk, Nq, Nlt) = (10, 160, 120, 24)
+        # maximum that can be afforder:
+        # (Nthbin, Nk, Nq, Nlt) = (10, 40, 40, 24) ~ 1.5G
+        paver1 = sum(Pbin[:,0])
+        
+        print >> fout, 'Result : ', paver1, Pq0[0,0], '+-', Pq0[0,1]
+        print >> fout, '# time: ', datetime.datetime.now()
+
+
+def sample_combined_discrete(lmbda, lmbda_spct, dmu, Norder, Counter_order, qx, kxb, Vertex, Ker_iOm_lt, my_mpi):
+    """ Takes care of unscreened static interaction only.
+        Samples polarization for any t and Q by Metropolis.
+        The normalization is done by adding a constant diagram, which should not suffers from ergodicity.
+    """
+    norder = Norder  # real order of diagram
+    if Counter_order >= 2 : # when we deal with counter-terms (Counter_order!=0 or !=1), their order is actually smaller
+        norder = Counter_order
+    
+    p = sw.params()
+    p.Toccurence = dToccurence(Norder, Counter_order)
+    p.Nthbin  = Nthbin
+    p.Nlt     = Nlt # 24
+    #p.Nlq     = 18
+    p.kF      = kF
+    p.beta    = beta
+    p.cutoffq = cutoffq
+    p.cutoffk = cutoffk
+    p.Nitt    = int(Nitt)
+    p.V0norm  = 40**norder * 1e-3 * (10./beta)**2 * (2.1*kF)**norder
+    p.V0exp   = 4.
+    p.Pr      = [0.65,0.25,0.1]
+    p.Qring   = Qring # 0.2     # before it was 0.5
+    p.dRk     = 1.3
+    p.dkF     = dkF0*kF  # before it was 0.5*kF
+    p.iseed   = random.randint(2**10)+my_mpi.rank*10
+    p.tmeassure = 2
+    p.Ncout    = Ncout
+    p.Nwarm    = 10000
+    p.lmbdat   = 0.0
+    p.Nq       = Nq
+    p.Nt       = 10
+    
+    filename = sinput+'/loops_Pdiags.'+str(Norder)+'_cworder_'+str(Counter_order)+'_'
+    
+    (diagsG, diagSign, Loop_index, Loop_type, Loop_vertex, diagVertex, indx, Vtype) = GetPDiags(filename, BKremove='')
+    
+    if len(Vtype)==0:
+        Vtype = zeros((len(diagsG),norder))
+    if (rank==master):
+        fout = io.open('snohup_'+str(Norder)+'_corder_'+str(Counter_order), 'ab')
+        print >> fout, '# time: ', datetime.datetime.now(), 'iseed=', p.iseed, " running sample_static_discrete"
+        print >> fout, 'rs=', rs, 'kF=', kF, 'beta=', beta, 'MaxOrder=', MaxOrder, 'cutoffq=', cutoffq, 'cutoffk=', cutoffk, 'dmu_1=', dmu_1
+    else:
+        #fout = io.open('snohup.'+str(rank)+'_'+str(Norder)+'_corder_'+str(Counter_order), 'ab')
+        fout = sys.stdout
+
+    dcutoff = p.cutoffk-p.cutoffq
+    hf = sw.HartreeFock(p.kF, p.cutoffk+dcutoff, p.beta, lmbda, dmu)
+    kx, epsx = hf.get()
+
+    (C_Pln2, C_Pln1, C_Pln0, Pbin, Pq0) = sw.sample_combined_discrete2(fout, qx, lmbda, lmbda_spct, p, kx, epsx, 
+                                                                      diagsG, diagSign, Loop_index, Loop_type, Vtype, indx, kxb,
+                                                                      Vertex, Ker_iOm_lt, my_mpi)
+    
+    if my_mpi.rank == my_mpi.master:
+        savetxt('Pbin_'+str(Norder)+'_corder_'+str(Counter_order), vstack( (qx/kF,Pbin) ).transpose())
+        save('kxb', kxb)
+        save('Pcof2_'+str(Norder)+'_corder_'+str(Counter_order), C_Pln2 )
+        save('Pcof1_'+str(Norder)+'_corder_'+str(Counter_order), C_Pln1 )
+        save('Pcof0_'+str(Norder)+'_corder_'+str(Counter_order), C_Pln0 )
+        savetxt('Pcof2_'+str(Norder)+'_corder_'+str(Counter_order), vstack( (qx/kF, C_Pln2[:,0], C_Pln2[:,-1]) ).T )
+        savetxt('Pcof1_'+str(Norder)+'_corder_'+str(Counter_order), vstack( (qx/kF, C_Pln1[:,0], C_Pln1[:,-1]) ).T )
+        savetxt('Pcof0_'+str(Norder)+'_corder_'+str(Counter_order), vstack( (qx/kF, C_Pln0[:,0], C_Pln0[:,-1]) ).T )
+        
+        savetxt('Pq0_'+str(Norder)+'_corder_'+str(Counter_order), vstack( (qx/kF,Pq0[:,0],Pq0[:,1]) ).transpose())
+        # (Nthbin, Nk, Nq, Nlt) = (10, 160, 120, 24)
+        # maximum that can be afforder:
+        # (Nthbin, Nk, Nq, Nlt) = (10, 40, 40, 24) ~ 1.5G
+        paver1 = sum(Pbin[:,0])
+        
+        print >> fout, 'Result : ', paver1, Pq0[0,0], '+-', Pq0[0,1]
+        print >> fout, '# time: ', datetime.datetime.now()
+
+        
+def sample_Q0(Q_external, lmbda, lmbda_spct, dmu, Norder, Counter_order, BKA=0, Debug=False):
+    """ Takes care of unscreened static interaction only.
+        Samples polarization for any t and Q by Metropolis.
+        The normalization is done by adding a constant diagram, which should not suffers from ergodicity.
+    """
+    HF=True
+    norder = Norder  # real order of diagram
+    if Counter_order >= 2 : # when we deal with counter-terms (Counter_order!=0 or !=1), their order is actually smaller
+        norder = Counter_order
+    
+    my_mpi = sw.my_mpi()
+    if Parallel:
+        comm = MPI.COMM_WORLD
+        my_mpi.size = comm.Get_size()
+        my_mpi.rank = comm.Get_rank()
+    
+    p = sw.params()
+    p.Toccurence = dToccurence(Norder, Counter_order)
+    p.Nthbin  = 1
+    p.Nlt     = 1
+    p.Nlq     = 1
+    
+    p.kF      = kF
+    p.beta    = beta
+    p.cutoffq = cutoffq
+    p.cutoffk = cutoffk
+    
+    p.Nitt    = int(Nitt)
+    
+    p.V0norm  = 40**norder * 1e-3 * (10./beta)**2 * (2.1*kF)**norder
+    p.V0exp   = 4.
+    p.Pr      = [0.65,0.25,0.1]
+    p.Qring   = Qring # 0.5
+    p.dRk     = 1.3
+    p.dkF     = dkF0*kF
+    p.iseed   = random.randint(2**10)+my_mpi.rank*10
+    p.tmeassure = 2
+    p.Ncout    = Ncout
+    p.Nwarm    = Nwarm # 10000
+    p.lmbdat   = 0.0
+    p.Nq       = 100
+    p.Nt       = 10
+    
+    filename = sinput+'/loops_Pdiags.'+str(Norder)+'_cworder_'+str(Counter_order)+'_'
+    (diagsG, diagSign, Loop_index, Loop_type, Loop_vertex, diagVertex, indx, Vtype) = GetPDiags(filename, BKremove='')
+     
+    if (len(diagsG)==0):
+        print 'Nothing to do'
+        return
+    if len(Vtype)==0:
+        Vtype = zeros((len(diagsG),norder))
+    
+    if (rank==master):
+        fout = io.open('pnohup_lmbda_'+str(lmbda)+'_'+str(Norder)+'_corder_'+str(Counter_order), 'ab')
+        print >> fout, '# time: ', datetime.datetime.now(), 'iseed=', p.iseed
+        print >> fout, 'rs=', rs, 'kF=', kF, 'beta=', beta, 'MaxOrder=', MaxOrder, 'cutoffq=', cutoffq, 'cutoffk=', cutoffk, 'dmu_1=', dmu_1
+    else:
+        fout = sys.stdout
+
+    print 'Nk=', Nk
+    kxb = Give_k_mesh(Nk, kF, cutoffk, 0.0)  #extra
+    dcutoff = p.cutoffk-p.cutoffq
+    hf = sw.HartreeFock(p.kF, p.cutoffk+dcutoff, p.beta, lmbda, dmu)
+    kx, epsx = hf.get()
+    
+    if my_mpi.rank==0:
+        savetxt('hf_epsk', vstack( (kx,epsx) ).transpose())
+
+    C_Pln2, C_Pln1, C_Pln0, Pbin, Pq0 = sw.sample_Q0W0(Q_external, BKA, fout, lmbda, lmbda_spct, p, kx, epsx, diagsG, diagSign, Loop_index, Loop_type, Vtype, indx, kxb, my_mpi)
+    
+    Paver=0.
+    _sigma_old_=0.
+    _sigma_ = 0.
+    if my_mpi.rank == my_mpi.master:
+        Paver = sum(Pbin)
+        N2 = len(Pbin)
+        _Paver2_ = N2 * sqrt(sum(Pbin*Pbin)/N2)
+        _sigma_old_ = sqrt( (_Paver2_ - Paver)*(Paver + _Paver2_)/N2 )
+        _sigma_ = Pq0[0,1]
+        
+        tx = p.beta*(0.5+arange(p.Nt))/p.Nt
+        #qx = p.cutoffq*(0.5+arange(p.Nq))/p.Nq
+        savetxt('Pbin_lmbda_'+str(lmbda)+'_'+str(Norder)+'_corder_'+str(Counter_order), vstack( (tx,Pbin) ).transpose())
+        save('kxb', kxb)
+        save('Pcof2_lmbda_'+str(lmbda)+'_'+str(Norder)+'_corder_'+str(Counter_order), C_Pln2 )
+        save('Pcof1_lmbda_'+str(lmbda)+'_'+str(Norder)+'_corder_'+str(Counter_order), C_Pln1 )
+        save('Pcof0_lmbda_'+str(lmbda)+'_'+str(Norder)+'_corder_'+str(Counter_order), C_Pln0 )
+        
+        Paver2 = (C_Pln0[0,0] + sum(C_Pln1) + sum(C_Pln2))*beta
+        
+        print >> fout, 'Result : ', Paver, Paver2, Pq0[0,0], '+-', _sigma_, _sigma_old_
+        print >> fout, '# time: ', datetime.datetime.now()
+    Paver,_sigma_ = comm.bcast( (Paver, _sigma_), root=my_mpi.master)
+    return (Paver, _sigma_)
+
 def sample_static_Q0(Q_external, lmbda, lmbda_spct, dmu, Norder, Counter_order, BKA=0, Hugenholtz=True, DynamicCT=False, Debug=False):
     """ Takes care of unscreened static interaction only.
         Samples polarization for any t and Q by Metropolis.
@@ -457,9 +715,10 @@ def sample_static_Q0(Q_external, lmbda, lmbda_spct, dmu, Norder, Counter_order, 
         my_mpi.rank = comm.Get_rank()
     
     p = sw.params()
+    p.Toccurence = dToccurence(Norder, Counter_order)
     if BKA:
-        p.Nthbin  = 10
-        p.Nkbin   = 50
+        p.Nthbin  = Nthbin #10
+        #p.Nkbin   = 50
     p.Nlt     = 1
     p.Nlq     = 1
     
@@ -473,9 +732,9 @@ def sample_static_Q0(Q_external, lmbda, lmbda_spct, dmu, Norder, Counter_order, 
     p.V0norm  = 40**norder * 1e-3 * (10./beta)**2 * (2.1*kF)**norder
     p.V0exp   = 4.
     p.Pr      = [0.65,0.25,0.1]
-    p.Qring   = 0.5
+    p.Qring   = Qring # 0.5
     p.dRk     = 1.3
-    p.dkF     = 0.5*kF
+    p.dkF     = dkF0*kF
     p.iseed   = random.randint(2**10)+my_mpi.rank*10
     p.tmeassure = 2
     p.Ncout    = Ncout #500000
@@ -534,24 +793,29 @@ def sample_static_Q0(Q_external, lmbda, lmbda_spct, dmu, Norder, Counter_order, 
         if DynamicCT:
             C_Pln, Pbin = sw.sample_static_Q0W0_HFD(fout, lmbda, lmbda_spct, p, kx, epsx, diagsG, diagSign, Loop_index, Loop_type, Vtype, indx, my_mpi)
         else:
-            C_Pln, Pbin = sw.sample_static_Q0W0_HFC(Q_external, fout, lmbda, lmbda_spct, p, kx, epsx, diagsG, diagSign, Loop_index, Loop_type, Vtype, indx, my_mpi)
+            C_Pln, Pbin, Pbin2 = sw.sample_static_Q0W0_HFC(Q_external, fout, lmbda, lmbda_spct, p, kx, epsx, diagsG, diagSign, Loop_index, Loop_type, Vtype, indx, my_mpi)
     elif BKA==1:
         if DynamicCT:
             C_Pln, Pbin = sw.sample_static_Q0W0_VHFD(fout, lmbda, lmbda_spct, p, kx, epsx, diagsG, diagSign, Loop_index, Loop_type, Vtype, indx, kxb, my_mpi)
         else:
-            C_Pln, Pbin = sw.sample_static_Q0W0_VHFC(Q_external, fout, lmbda, lmbda_spct, p, kx, epsx, diagsG, diagSign, Loop_index, Loop_type, Vtype, indx, kxb, my_mpi)
+            C_Pln, Pbin, Pbin2 = sw.sample_static_Q0W0_VHFC(Q_external, fout, lmbda, lmbda_spct, p, kx, epsx, diagsG, diagSign, Loop_index, Loop_type, Vtype, indx, kxb, my_mpi)
     elif BKA==2:
         if DynamicCT:
             C_Pln, Pbin = sw.sample_static_Q0W0_VSHFD(fout, lmbda, lmbda_spct, p, kx, epsx, diagsG, diagSign, Loop_index, Loop_type, Vtype, indx, kxb, my_mpi)
         else:
-            C_Pln, Pbin = sw.sample_static_Q0W0_VSHFC(Q_external, fout, lmbda, lmbda_spct, p, kx, epsx, diagsG, diagSign, Loop_index, Loop_type, Vtype, indx, kxb, my_mpi)
+            C_Pln, Pbin, Pbin2 = sw.sample_static_Q0W0_VSHFC(Q_external, fout, lmbda, lmbda_spct, p, kx, epsx, diagsG, diagSign, Loop_index, Loop_type, Vtype, indx, kxb, my_mpi)
     else:
         print 'ERROR Unrecognized BKA in sample_static_Q0'
         sys.exit(1)
         
     Paver=0.
+    _sigma_=0.
     if my_mpi.rank == my_mpi.master:
         Paver = sum(Pbin)
+        N2 = len(Pbin2)
+        _Paver2_ = N2 * sqrt(sum(Pbin2*Pbin2)/N2)
+        _sigma_ = sqrt( (Paver - _Paver2_)*(Paver + _Paver2_)/(N2*my_mpi.size) )
+         
         tx = p.beta*(0.5+arange(p.Nt))/p.Nt
         #qx = p.cutoffq*(0.5+arange(p.Nq))/p.Nq
         savetxt('Pbin_lmbda_'+str(lmbda)+'_'+str(Norder)+'_corder_'+str(Counter_order), vstack( (tx,Pbin) ).transpose())
@@ -561,10 +825,10 @@ def sample_static_Q0(Q_external, lmbda, lmbda_spct, dmu, Norder, Counter_order, 
             Paver2 = Paver
         else:
             Paver2 = C_Pln[0,0]*beta
-        print >> fout, 'Result : ', Paver, Paver2
+        print >> fout, 'Result : ', Paver, Paver2, '+-', _sigma_
         print >> fout, '# time: ', datetime.datetime.now()
-    Paver = comm.bcast(Paver, root=my_mpi.master)
-    return Paver
+    Paver,_sigma_ = comm.bcast( (Paver, _sigma_), root=my_mpi.master)
+    return (Paver, _sigma_)
 
 
 def _ferm_(x):
@@ -574,7 +838,7 @@ def _ferm_(x):
         return 1./(exp(x)+1.)
 ferm = vectorize(_ferm_)
 
-def sample_Density(lmbda, lmbda_spct, dmu, Norder, Counter_order, Hugenholtz=True, DynamicCT=False):
+def sample_Density(lmbda, lmbda_spct, dmu, Norder, Counter_order, Switch_Off_Interaction_Counterterm=False, Hugenholtz=True, DynamicCT=False):
     """ 
     """
     norder = Norder  # real order of diagram
@@ -588,6 +852,10 @@ def sample_Density(lmbda, lmbda_spct, dmu, Norder, Counter_order, Hugenholtz=Tru
         my_mpi.rank = comm.Get_rank()
         
     p = sw.params()
+    p.lmbda_counter_scale = 1.
+    if (Switch_Off_Interaction_Counterterm):
+        p.lmbda_counter_scale =0.0
+    p.Toccurence = dToccurence(Norder, Counter_order)
     p.kF      = kF
     p.beta    = beta
     p.cutoffq = cutoffq
@@ -598,9 +866,9 @@ def sample_Density(lmbda, lmbda_spct, dmu, Norder, Counter_order, Hugenholtz=Tru
     p.V0norm  = 40**norder/5 * 1e-3 * (10./beta)**2 * (2.1*kF)**norder
     p.V0exp   = 4.
     p.Pr      = [0.65,0.25,0.1]
-    p.Qring   = 0.5
+    p.Qring   = Qring # 0.5
     p.dRk     = 1.3
-    p.dkF     = 0.5*kF 
+    p.dkF     = dkF0*kF 
     p.iseed   = random.randint(2**10)+my_mpi.rank*10
     p.tmeassure = 2
     p.Ncout    = Ncout #500000
@@ -609,6 +877,7 @@ def sample_Density(lmbda, lmbda_spct, dmu, Norder, Counter_order, Hugenholtz=Tru
     p.Nq       = 100
     p.Nt       = 10
 
+    #print 'p.lmbda_counter_scale=', p.lmbda_counter_scale
     # same: kF, beta, dmu, lmbda
     dcutoff = p.cutoffk-p.cutoffq
     hf = sw.HartreeFock(p.kF, p.cutoffk+dcutoff, p.beta, lmbda, dmu)
@@ -639,7 +908,7 @@ def sample_Density(lmbda, lmbda_spct, dmu, Norder, Counter_order, Hugenholtz=Tru
         
     (diagsG, diagSign, Loop_index, Loop_type, Loop_vertex, diagVertex, indx, Vtype) = GetPDiags(filename)
     (diagsG, diagSign, Loop_index, Loop_type, Loop_vertex, diagVertex, indx, Vtype) = KeepDensityDiagrams2(diagsG, diagSign, Loop_index, Loop_type, Loop_vertex, diagVertex, indx, Vtype)
-
+    #print 'diagsG=', diagsG, 'diagSign=', diagSign, 'Vtype=', Vtype
 
     #### TEMPORARY
     #diagSign = array(diagSign[:,0])
@@ -675,19 +944,20 @@ def sample_dynamic(lmbda=1e-5):
     Norder=2
     
     p = sw.params()
+    p.Toccurence = dToccurence(Norder, Counter_order)
     p.kF      = kF
     p.beta    = beta
     p.cutoffq = cutoffq
     p.cutoffk = cutoffk
 
-    p.Nitt    = 100000000 #100000000
+    p.Nitt    = int(Nitt) 
 
     p.V0norm  = 4**norder * 1e-2 * (10./beta)**2
     p.V0exp   = 4.
     p.Pr      = [0.65,0.25,0.1]
-    p.Qring   = 0.5
+    p.Qring   = Qring # 0.5
     p.dRk     = 1.3
-    p.dkF     = 0.5*kF
+    p.dkF     = dkF0*kF
     p.iseed   = 1 #random.randint(2**31)
     p.tmeassure = 2
     p.Ncout    = 500000
@@ -1031,6 +1301,15 @@ def ComputeSPCounter(lmbda, MaxOrder, n0, dmu_1=20, small=1e-6, small_error=0.05
         dmu = comm.bcast(dmu, root=0)
         Ekn0 = comm.bcast(Ekn0, root=0)
         
+    # First we compute only the single-particle counter term of the order (N,N-1), which corresponds to a bubble with one dot on it.
+    case = (3,2) # here lmbda_Vq is set to zero, and lmbda_spc = 1.0
+    lmbda_spct=[1.]
+    (Nc_0,sigmaNc_0,Ekin_0,sigmaEkin_0) = sample_Density(lmbda, lmbda_spct, dmu, case[0], case[1], True, Hugenholtz=Hugenholtz, DynamicCT=DynamicCT)
+    if rank==master:
+        print >> fo, "%2d %2d %s %12.8f %s %8.3g %s %12.8f %s %8.3g %s %12.8f %s %8.3g " % (case[0], case[1], 'dn=', Nc_0, '+-', sigmaNc_0, 'n-n(1)=', Nc_0, '+-', sigmaNc_0, 'Ekin=', Ekin_0, '+-', sigmaEkin_0), 'lmbda_spct=', lmbda_spct
+        print >> fo, '-------------- '
+        fo.flush()
+
     lmbda_spct=[0.]
     for norder in range(3,MaxOrder+1):
         ii=norder-3
@@ -1039,79 +1318,41 @@ def ComputeSPCounter(lmbda, MaxOrder, n0, dmu_1=20, small=1e-6, small_error=0.05
             NCases0 = [(norder, Corder) for Corder in [0]+range(2,norder)]
         else:
             NCases0 = [(norder, Corder) for Corder in range(0,norder)]
-        NCases0.remove( (norder,2) )   # It turns out that only (norder,2) needs to be changed to find the renormalized condition for the single-particle counter term.
         
         dNtot0 = 0.
         Nc_error=0.
         Ekn = Ekn0
         Ekn_error = 0.
         for case in NCases0:
-            (Nc,sigmaNc,Ekin,sigmaEkin) = sample_Density(lmbda, lmbda_spct, dmu, case[0], case[1], Hugenholtz=Hugenholtz, DynamicCT=DynamicCT)
+            (Nc,sigmaNc,Ekin,sigmaEkin) = sample_Density(lmbda, lmbda_spct, dmu, case[0], case[1], False, Hugenholtz=Hugenholtz, DynamicCT=DynamicCT)
             dNtot0 += Nc
             Nc_error += sigmaNc
             Ekn += Ekin
             Ekn_error += sigmaEkin
             if rank==master:
-                print >> fo, "%2d %2d %s %12.8f %s %12.8f %s %8.3g %s %12.8f %s %8.3g %s %10.6f" % (case[0], case[1], 'dn=', Nc, 'n-n(1)=', dNtot0, '+-', Nc_error, 'Ekin=', Ekn, '+-', Ekn_error, 'dEkn=', Ekin), 'lmbda_spct=', lmbda_spct
+                print >> fo, "%2d %2d %s %12.8f %s %8.3g %s %12.8f %s %8.3g %s %12.8f %s %8.3g %s %10.6f" % (case[0], case[1], 'dn=', Nc, '+-', sigmaNc, 'n-n(1)=', dNtot0, '+-', Nc_error, 'Ekin=', Ekn, '+-', Ekn_error, 'dEkn=', Ekin), 'lmbda_spct=', lmbda_spct
                 fo.flush()
         
-        NCases = [(norder,2)]  # It turns out that only (norder,2) needs to be changed to find the renormalized condition for the single-particle counter term.
-        xs=[]
-        ys=[]
-        for imu in range(-1,100):
-            dNtot2 = 0.
-            Nc_error2 = 0.
-            Ekn2 = 0.
-            Ekn_error2 = 0.
-            for case in NCases:
-                (Nc,sigmaNc,Ekin,sigmaEkin) = sample_Density(lmbda, lmbda_spct, dmu, case[0], case[1], Hugenholtz=Hugenholtz, DynamicCT=DynamicCT)
-                dNtot2 += Nc
-                Nc_error2 += sigmaNc
-                error = Nc_error2 + Nc_error
-                Ekn2 += Ekin
-                Ekn_error2 += sigmaEkin
-                if rank==master:
-                    print >> fo, "%2d %2d %s %12.8f %s %12.8f %s %8.3g %s %12.8f %s %8.3g %s %10.6f" % (case[0], case[1], 'dn=', Nc, 'n-n(1)=', dNtot0+dNtot2, '+-', error, 'Ekin=', Ekn+Ekn2, '+-', Ekn_error+Ekn_error2, 'dEkn=', Ekin), 'lmbda_spct=', lmbda_spct
-                    fo.flush()
-            xs.append(lmbda_spct[ii])
-            ys.append(dNtot0+dNtot2)
-            if (abs(dNtot0+dNtot2)<small or abs(dNtot0+dNtot2) < small_error*error):
-                if rank==master:
-                    print >> fo, '# lmbda_spct_best=', lmbda_spct, 'dmu=', dmu, ' Ekn=', Ekn+Ekn2, '+-', Ekn_error+Ekn_error2, ' lmbda=', lmbda, 'order=', norder, 'n0=', n0
-                    fo.flush()
-                Ekn0 = Ekn+Ekn2 # now update Ekn0 with the kinetic energy up to this order
-                break
-            
-            if imu<0:
-                lmbda_spct[ii] -= sign(dNtot0+dNtot2)*norder/dmu_1   # At the first step we need a reasonable second point
-            else:
-                # fitting the line through the points
-                if len(xs)>4: # take only the last four points 
-                    xs = xs[-4:]
-                    ys = ys[-4:]
-                if rank==master:
-                    print >> fo, 'Fitting xs=', xs, 'ys=', ys
-                    fo.flush()
-                _xs_ = array(xs)
-                _ys_ = array(ys)
-                Sx = sum(_xs_)
-                Sy = sum(_ys_)
-                Sxx = sum(_xs_**2)
-                Sxy = sum(_xs_*_ys_)
-                S = len(_xs_)
-                Dlt = S*Sxx-Sx**2
-                # point where the line vanishes is the next approximation
-                lmbda_spct[ii] = (Sx * Sxy - Sxx * Sy)/(S * Sxy - Sx*Sy)
-                # error estimate of density
-                error_y = Nc_error * (sqrt(abs(Sxx/Dlt)) + sqrt(abs(S/Dlt))*abs(dmu))
-            if rank==master:
-                print >> fo, '#---- changing lmbda_spct to', lmbda_spct, ' lmbda=', lmbda, 'MaxOrder=', MaxOrder, 'n0=', n0
-                fo.flush()
-        
-        lmbda_spct[ii] = xs[-1]
+        lmbda_spct[ii] = -dNtot0/Nc_0
+        # add the last part to satisfy charge neutrality
+        (Nc, Ekin)  = (lmbda_spct[ii] * Nc_0, lmbda_spct[ii] * Ekin_0 )
+        (sigmaNc, sigmaEkin) = ( abs(lmbda_spct[ii]) * sigmaNc_0, abs(lmbda_spct[ii]) * sigmaEkin_0 )
+        #
+        dNtot0 += Nc
+        Nc_error += sigmaNc
+        Ekn += Ekin
+        Ekn_error += sigmaEkin
+        if rank==master:
+            print >> fo, "%2d %2d %s %12.8f %s %8.3g %s %12.8f %s %8.3g %s %12.8f %s %8.3g %s %10.6f" % (norder, 2, 'dn=', Nc, '+-', sigmaNc, 'n-n(1)=', dNtot0, '+-', Nc_error, 'Ekin=', Ekn, '+-', Ekn_error, 'dEkn=', Ekin), 'lmbda_spct=', lmbda_spct
+            fo.flush()
+            Ekn0 = Ekn # now update Ekn0 with the kinetic energy up to this order
+
         if norder<MaxOrder:
             lmbda_spct.append(0.0)
-    if rank==master: fo.close()
+        
+    if rank==master: 
+        print >> fo, '# time: ', datetime.datetime.now()
+        fo.close()
     
     return (dmu, lmbda_spct)
 
@@ -1189,6 +1430,11 @@ def ComputeChemicalPotential(dmu, lmbda, MaxOrder, n0, dmu_1=20, FIT=True, error
 if __name__ == '__main__':
     DynamicCT=False
     BKA=False
+    Nthbin = 10
+    Nlt    = 24
+    Nw     = 1
+    Qring  = 0.2 # before was 0.5
+    dkF0   = 0.2 # before was 0.5
     execfile('params.py')
     for k in p.keys():
         #print k, p[k]
@@ -1205,72 +1451,38 @@ if __name__ == '__main__':
     #print 'lmbda=', lmbda
     #print 'dmu=', dmu
     
-    #rs = 4.0
-    #kF = (9*pi/4.)**(1./3.) /rs
-    #kF2 = kF**2
-    
-    #cutoffq = 3*kF
-    #cutoffk = cutoffq + 1.2*kF
-    #beta = 50 # 1./(kF**2)
-    
-    #MaxOrder=2
-    #icase='computeP'
-    
-    #dmu_1 = 20.  # dmu_1 = 20 for rs=4, dmu_1=12 for rs=1
-    
+    my_mpi = sw.my_mpi()
     if Parallel:
         comm = MPI.COMM_WORLD
         size = comm.Get_size()
         rank = comm.Get_rank()
         master=0
+        my_mpi.rank = rank
+        my_mpi.size = size
+    #if Parallel:
+    #    comm = MPI.COMM_WORLD
+    #    size = comm.Get_size()
+    #    rank = comm.Get_rank()
+    #    master=0
 
-    #lmbda = 0.75
-    #dmu= -0.00261679023544
-    #lmbda_spct = [-0.2965248503586822, -0.095565423543510261, -0.033988459908790541] 
-    #sample_static_discrete(lmbda, lmbda_spct, dmu, 3, 2, BKA=BKA, Hugenholtz=Hugenholtz)
-    #sample_static(lmbda, lmbda_spct, dmu, 2, 0, BKA=BKA, Hugenholtz=Hugenholtz)
-
-    #w3 = sample_Density(lmbda, lmbda_spct, dmu, 5, 4, Hugenholtz=Hugenholtz)
-    #fq = -sample_static_Q0(Q_external, lmbda, lmbda_spct, dmu, 4, 3, BKA=BKA, Hugenholtz=Hugenholtz, DynamicCT=DynamicCT)
-    
-    #sample_static(lmbda, lmbda_spct, dmu, 4, 0, BKA=BKA, Hugenholtz=Hugenholtz, DynamicCT=DynamicCT)
-    #w0 = sample_Density(lmbda, lmbda_spct, dmu, 4, 0, Hugenholtz=Hugenholtz)
-    #w2 = sample_Density(lmbda, lmbda_spct, dmu, 4, 2, Hugenholtz=Hugenholtz)
-    #w3 = sample_Density(lmbda, lmbda_spct, dmu, 4, 3, Hugenholtz=Hugenholtz)
-    #print w0, w2, w3
-    #fq = -sample_static_Q0(lmbda, lmbda_spct, dmu, 4, 0, BKA=BKA, Hugenholtz=Hugenholtz, DynamicCT=DynamicCT)
-    #print 'res=', fq
-    
-    #sample_static_Q0(lmbda, lmbda_spct, dmu, 4, 2, BKA=BKA, DynamicCT=DynamicCT)
-    #sample_Density(lmbda, lmbda_spct, dmu, 3, 2, DynamicCT)
-    #(dmu, lmbda_spct) = ComputeSPCounter(lmbda, MaxOrder, n0, dmu_1, 5e-6, 0.1)
-    #sample_static(lmbda, lmbda_spct, dmu, 3, 0, BKA=BKA, DynamicCT=DynamicCT, Debug=False)
-    #sample_staticV(lmbda, lmbda_spct, dmu, 3, 2, True)
-    #sample_static_old(lmbda, lmbda_spct, dmu, 5, 0, Debug=False)
-    #sample_staticV(lmbda, lmbda_spct, dmu, 5, 0, Debug=False)
-    #(Nc,sigmaNc) = sample_Density(lmbda, lmbda_spct, dmu, 3, 0)
-    #sample_static_Q0(lmbda, dmu, 3, 2)
-    #ComputeChemicalPotential(dmu, lmbda, MaxOrder, n0)
-    #(dmu, lmbda_spct) = ComputeSPCounter(lmbda, 5, n0, dmu_1, 5e-6, 0.2)
-    #print 'lmbda_spct=', lmbda_spct
-    #sample_static(lmbda, lmbda_spct, dmu, 3, 0)
-    #sys.exit(0)
-    
-    
-    #icase = 'computeP'
     start_order = 2
-    if BKA: start_order=3
+    #if BKA: start_order=3
     if DynamicCT or Hugenholtz:
         NCases = [(norder, Corder) for norder in range(start_order,MaxOrder+1) for Corder in [0]+range(2,norder)]
     else:
         NCases = [(norder, Corder) for norder in range(start_order,MaxOrder+1) for Corder in range(norder)]
     if (2,1) in NCases: NCases.remove((2,1))
     
-    if icase=='density':
+    if icase=='density' or icase=='scan':
         NCases = [(1,0)] + NCases
         for lmbda in _lmbdas_:
-            (dmu, lmbda_spct) = ComputeSPCounter(lmbda, MaxOrder, n0, dmu_1, 5e-6, 0.13)
-            
+            if Existing_dmu:
+                dmu = dmus[lmbda]
+                lmbda_spct = lmbda_spcts[lmbda]
+            else:
+                (dmu, lmbda_spct) = ComputeSPCounter(lmbda, MaxOrder, n0, dmu_1, 5e-6, 0.13)
+                continue
+                
             if (rank==master):
                 fo = open('order_'+str(MaxOrder)+'.dat', 'a')
                 print >> fo, '# time: ', datetime.datetime.now()
@@ -1279,24 +1491,58 @@ if __name__ == '__main__':
             for case in NCases:
                 if case[0]==1:
                     fq = -beta * static_Q0_first_order(lmbda, dmu)
+                    _sigma_ = 0.0
                 else:
-                    fq = -sample_static_Q0(Q_external, lmbda, lmbda_spct, dmu, case[0], case[1], BKA=BKA, Hugenholtz=Hugenholtz, DynamicCT=DynamicCT)
+                    #mfq,_sigma_ = sample_static_Q0(Q_external, lmbda, lmbda_spct, dmu, case[0], case[1], BKA=BKA, Hugenholtz=Hugenholtz, DynamicCT=DynamicCT)
+                    mfq,_sigma_ = sample_Q0(Q_external, lmbda, lmbda_spct, dmu, case[0], case[1], BKA)
+                    fq = -mfq
                     
                 fq_tot[case[0]] += fq
                 if (rank==master):
-                    print >> fo, '# ', case[0], case[1], fq
+                    print >> fo, '# ', case[0], case[1], fq, _sigma_
                     fo.flush()
             if (rank==master):
-                print >> fo, '# total=', fq_tot
+                print >> fo, '# total=', fq_tot.tolist()
                 print >> fo, lmbda, " %17.13f "*(len(fq_tot)-1) % tuple([sum(fq_tot[:i]) for i in range(2,MaxOrder+2)])
                 print >> fo, '# time: ', datetime.datetime.now()
                 fo.close()
             
-    elif icase=='computeP':
-        (dmu, lmbda_spct) = ComputeSPCounter(lmbda, MaxOrder, n0, dmu_1, 5e-7, 0.05)
+    elif icase=='computeP' or icase=='q_dep':
+        if Existing_dmu:
+            dmu = dmus[lmbda]
+            lmbda_spct = lmbda_spcts[lmbda]
+        else:
+            (dmu, lmbda_spct) = ComputeSPCounter(lmbda, MaxOrder, n0, dmu_1, 5e-7, 0.05)
+
+        NEW=True
+        if (NEW):
+            qx = linspace(1e-5,p['cutoffq'],p['Nq'])
+            kxb = Give_k_mesh(p['Nk'], kF, p['cutoffk'], 0.0)
+            if my_mpi.rank == 0:
+                print 'using dmu=', dmu, 'lmbda=', lmbda_spct
+                save('qxb', qx)
+
+            p_vrt= {'rs':p['rs'], 'beta':p['beta'], 'lmbda':p['lmbda'], 'dmu':dmu, 'Nlt':Nlt, 'lmax':p['lmax'], 'Nq':p['Nq'], 'Nk':p['Nk'],
+                    'Nt':p['Nt'], 'nom':p['nom'], 'ntail':p['ntail'], 'cutoffq':p['cutoffq'], 'cutoffk':p['cutoffk'],
+                    'SaveLadder':False, 'SaveAll':False, 'Nthbin':Nthbin, 'SaveRc':False}
+            import ntpvertex
+            ntpvertex.ConstructVertex(p_vrt)
             
+            iOm = array( load('iOm.dat.npy') ,dtype=intc)
+            Nw = min(Nw, len(iOm))
+            Vertex = zeros( ( Nthbin, len(kxb)-1, len(qx), Nw ), dtype=complex)
+            for iq in range(len(qx)):
+                V = load('Vertex.'+str(iq)+'.npy')  # Vertex[X,ik,iq,iw]
+                Vertex[:,:,iq,:] = V[:,:,:Nw]
+            Ker_iOm_lt = load('Ker_iOm_lt.npy')[:Nw,:]
+            
+        #NCases=[(3,0)]
         for case in NCases:
+            if NEW:
+                sample_combined_discrete(lmbda, lmbda_spct, dmu, case[0], case[1], qx, kxb, Vertex, Ker_iOm_lt, my_mpi)
+                #sample_combined_discrete_heavy(lmbda, lmbda_spct, dmu, case[0], case[1], qx, kxb, my_mpi)
+            else:
+                sample_static_discrete(lmbda, lmbda_spct, dmu, case[0], case[1], BKA=BKA, Hugenholtz=Hugenholtz)
             #sample_static(lmbda, lmbda_spct, dmu, case[0], case[1], BKA=BKA, Hugenholtz=Hugenholtz, DynamicCT=DynamicCT, Debug=False)
-            sample_static_discrete(lmbda, lmbda_spct, dmu, case[0], case[1], BKA=BKA, Hugenholtz=Hugenholtz)
     else:
         print 'Not yet implemented'

@@ -1,6 +1,7 @@
+# @Copyright 2018 Kristjan Haule 
 from scipy import optimize
 from scipy import *
-# @Copyright 2018 Kristjan Haule and Kun Chen
+
 def GiveTanMesh(x0,L,Nw):
     def fun(x,x0,L,Nw):
         "x[0]=d, x[1]=w"

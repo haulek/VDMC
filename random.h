@@ -1,4 +1,4 @@
-// @Copyright 2018 Kristjan Haule and Kun Chen    
+// @Copyright 2018 Kristjan Haule 
 #include <cstdio>
 #include <cstdlib>
 #include <gsl/gsl_rng.h>

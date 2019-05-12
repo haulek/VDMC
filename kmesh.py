@@ -1,5 +1,6 @@
+# @Copyright 2018 Kristjan Haule 
 from tanmesh import *
-# @Copyright 2018 Kristjan Haule and Kun Chen
+
 def Give_k_mesh(Nk,kF,cutoff,k0=1e-10):
     x0 = 2*kF/(6.*Nk/2)
     #x0 = 2*kF/(4.*Nk/2)

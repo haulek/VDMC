@@ -1,0 +1,11 @@
+To generate diagrams, do the following:
+1) execute script
+ > generate_step1.py
+2) execute script
+ > generate_step2.py
+3) execute:
+ > generate_loops1.py
+4) if you need spin diagram, execute
+ > KeepSpinDiag.py
+ and give the name of the entire directory
+ 

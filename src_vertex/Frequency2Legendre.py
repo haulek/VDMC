@@ -1,10 +1,10 @@
+# @Copyright 2018 Kristjan Haule 
 from scipy import *
 from scipy import special
 from scipy import interpolate
 from pylab import *
 from numpy.polynomial import legendre
 import tpvert as tpv
-# @Copyright 2018 Kristjan Haule and Kun Chen    
 
 def GetAsymptoteSphBessels(nn, lmax):
     """

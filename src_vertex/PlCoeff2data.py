@@ -1,10 +1,10 @@
 #!/usr/bin/env python
+# @Copyright 2018 Kristjan Haule 
 import os
 from scipy import *
 from pylab import *
 from numpy.polynomial import legendre
 from Frequency2Legendre import *
-# @Copyright 2018 Kristjan Haule and Kun Chen    
 
 if __name__ == '__main__':
     col=['b','g','r','c','m','y','k','w']

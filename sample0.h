@@ -1,4 +1,4 @@
-// @Copyright 2018 Kristjan Haule and Kun Chen    
+// @Copyright 2018 Kristjan Haule 
 #include <iostream>
 #include <cmath>
 #include <bitset>
@@ -10,6 +10,11 @@
 #define _TIME
 #include "timer.h"
 #include "vectlist.h"
+
+//typedef std::vector<int> Tsign;                                                                                                                                                               
+typedef std::vector<double> Tsign;
+typedef std::vector<Tsign> TdiagSign;
+
 
 #ifndef FNAME
 #ifdef NO_APPEND_FORTRAN
@@ -28,6 +33,11 @@ extern "C" {
 //using namespace std;
 //using namespace blitz;
 namespace bl = blitz;
+
+inline int et(int i){
+  // for equal time we will use t[3]=t[2], t[5]=t[4], ... but we should not use t[1]!=t[0]
+  return i==1 ? 1 : 2*(i/2);
+}
 
 inline double Vq(double q){ return 8*pi/(q*q+1e-6);}
 
@@ -53,11 +63,13 @@ public:
 class params{
 public:
   double kF, beta;        // The fermi wave vector and inverse temperature
+  double Toccurence;      // How often to check that V0norm is good. Default=1
+  double lmbda_counter_scale; // Should be 1.0, unless we want to scale the lambda counter term, compared to lambda in Vq(lambda). Useful for computing the chemical potential 
   double cutoffk, cutoffq;//Cutoff for dependent momentum k and independent momentum q
   int Nitt;               // Total number of MC -steps
   double V0norm, V0exp;   // The value of measuring diagram, and its exponent for falling-off
   std::array<double,3> Pr;// List of probabilities to make each of the MC steps
-  int Nq, Nt;         // Number of momentum k-points and time points
+  int Nq, Nt;             // Number of momentum k-points and time points
   double Qring;           // How often should we chose momentum in a ring around origin versus adding dk to k
   double dRk;             // For the above ring method, how large should be step
   double dkF;             // If not ring method, how much should we change momentum dk
@@ -67,12 +79,11 @@ public:
   int Nwarm;              // How many warm-up steps
   double lmbdat;          // coefficient to reweight time
   int Nthbin;             // Number of bins for cos(theta) in computing vertex function
-  int Nkbin;              // Number of bins for internal momentum k in computing vertex function
   int Nlt;                // Number of Legendre Polynomials for expansion of time
   int Nlq;                // Numbef of Legendre Polynomials for expansion of external momentum q
-  params() : V0norm(1), V0exp(0), Pr{1/3.,1/3.,1/3.}, 
-	     Qring(0.0), dRk(1.4), iseed(0), tmeassure(2), Ncout(100000), 
-	     Nwarm(10000), lmbdat(3.0), Nthbin(8), Nkbin(50), Nlt(20), Nlq(18) {}
+  params() : Toccurence(1.), lmbda_counter_scale(1.0), V0norm(1), V0exp(0), Pr{1/3.,1/3.,1/3.}, 
+    Qring(0.0), dRk(1.4), iseed(0), tmeassure(2), Ncout(100000), 
+	     Nwarm(10000), lmbdat(3.0), Nthbin(8), Nlt(20), Nlq(18) {}
 };
 
 class egass_Gk{
@@ -527,7 +538,7 @@ public:
     // histogram of other momenta, which we integrate over
     for (int ik=i_first_momentum; ik<Nloops; ik++){
       double k = norm(momentum(ik));
-      if (k<cutoffk){
+      if (k<cutoffk && k>1e-150){
 	int iik = static_cast<int>(k/cutoffk * Nbin);
 	if (iik>=Nbin) iik=Nbin-1;
 	K_hist(ik,iik) += dk_hist/(k*k);
@@ -540,7 +551,7 @@ public:
     for (int ik=0; ik<Nloops-1; ik++){
       bl::TinyVector<real,3> dkv = momentum(ik)-momentum(Nloops-1);
       double dk = norm(dkv);
-      if (dk < cutoffk ){
+      if (dk < cutoffk && dk>1e-150 ){
 	int iik = static_cast<int>(dk/cutoffk * Nbin);
 	if (iik>=Nbin) iik=Nbin-1;
 	double dd = dk_hist/(dk*dk);
